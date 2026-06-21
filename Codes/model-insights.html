@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TB-CAD Clinical Suite - Model Insights</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .model-top-grid {
+      display: grid;
+      grid-template-columns: 280px 1fr 1fr;
+      gap: 20px;
+    }
+    .xai-section-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 1200px) {
+      .model-top-grid {
+        grid-template-columns: 1fr;
+      }
+      .xai-section-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">TB</div>
+        <div class="sidebar-brand-text">
+          <h1>TB-CAD Clinical Suite</h1>
+          <span>v1.0 AI Diagnostic System</span>
+        </div>
+      </div>
+      <div class="sidebar-cta">
+        <a href="chest-xray.html" class="btn-start-analysis">▶ Start Analysis</a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+        <a href="chest-xray.html" class="nav-item"><span class="nav-icon">🔬</span> Chest X-ray Analysis</a>
+        <a href="visual-analytics.html" class="nav-item"><span class="nav-icon">📊</span> Visual Analytics</a>
+        <a href="ai-assistant.html" class="nav-item"><span class="nav-icon">🤖</span> AI Assistant</a>
+        <a href="clinical-recommendations.html" class="nav-item"><span class="nav-icon">📋</span> Clinical Recommendations</a>
+        <a href="model-insights.html" class="nav-item active"><span class="nav-icon">✨</span> Model Insights</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <a href="#" class="nav-item"><span class="nav-icon">💬</span> Support</a>
+        <a href="#" class="nav-item"><span class="nav-icon">🚪</span> Sign Out</a>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="topbar-brand-label">TB-CAD AI</span>
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search patient ID, name, or scan...">
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn">🔔<span class="notification-dot"></span></button>
+          <button class="topbar-icon-btn">⚙️</button>
+          <div class="user-info">
+            <div class="user-info-text">
+              <div class="user-name">Dr. Specialist</div>
+              <div class="user-role">Clinical Lead</div>
+            </div>
+            <div class="user-avatar">DS</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Page Header Row -->
+        <div class="page-header page-header-row">
+          <div>
+            <h1>Model Performance & Architecture</h1>
+            <p class="page-subtitle">🟢 EfficientNetB0 TB-CAD Engine v1.0 • Transfer learning for CXR classification</p>
+          </div>
+          
+          <!-- Highlight Metrics Badges -->
+          <div class="metric-badges animate-fade-in">
+            <div class="metric-badge green">
+              <div class="mb-label">GLOBAL CONFIDENCE</div>
+              <div class="mb-value">98.4%</div>
+            </div>
+            <div class="metric-badge blue">
+              <div class="mb-label">AVG LATENCY</div>
+              <div class="mb-value">142ms</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Section Grid -->
+        <div class="model-top-grid mb-24">
+          <!-- Architecture Pipeline -->
+          <div class="card animate-fade-in" style="display: flex; flex-direction: column;">
+            <div class="card-header" style="margin-bottom: 12px;">
+              <h2 class="card-title">⚙️ Architecture Pipeline</h2>
+            </div>
+            <div class="arch-cards" style="flex: 1;">
+              <div class="arch-card">
+                <div class="arch-icon gray">🧠</div>
+                <div>
+                  <h4>Backbone Network</h4>
+                  <p>EfficientNetB0 (ImageNet Pre-trained)</p>
+                </div>
+              </div>
+              <div class="arch-card">
+                <div class="arch-icon gray">🔗</div>
+                <div>
+                  <h4>Classifier Head</h4>
+                  <p>Dense Layers + Softmax (Binary)</p>
+                </div>
+              </div>
+              <div class="arch-card" style="border-color: var(--blue-200); background: var(--blue-50);">
+                <div class="arch-icon blue">🔵</div>
+                <div>
+                  <h4 style="color: var(--blue-700);">XAI Module</h4>
+                  <p>Grad-CAM Feature Extractor</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Training vs Validation Accuracy -->
+          <div class="card animate-fade-in animate-fade-in-delay-1">
+            <div class="card-header">
+              <h2 class="card-title">Training vs Validation Accuracy</h2>
+            </div>
+            <div class="chart-container" style="height: 220px;">
+              <canvas id="accuracyChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Loss Curves -->
+          <div class="card animate-fade-in animate-fade-in-delay-1">
+            <div class="card-header">
+              <h2 class="card-title">Loss Curves</h2>
+            </div>
+            <div class="chart-container" style="height: 220px;">
+              <canvas id="lossChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Per-Class Metrics Table -->
+        <div class="card mb-24 animate-fade-in-delay-2">
+          <div class="card-header">
+            <h2 class="card-title">Per-Class Metrics</h2>
+            <a href="#" class="btn btn-ghost btn-sm" style="color: var(--blue-600); font-weight: 700;">⬇️ Export Report</a>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Class</th>
+                  <th>Precision</th>
+                  <th>Recall</th>
+                  <th>F1-Score</th>
+                  <th>Support</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="font-semibold" style="color: var(--red-600)">TB-Positive</td>
+                  <td>0.978</td>
+                  <td>0.982</td>
+                  <td>0.980</td>
+                  <td class="text-muted">1,245</td>
+                </tr>
+                <tr>
+                  <td class="font-semibold" style="color: var(--blue-600)">Normal</td>
+                  <td>0.991</td>
+                  <td>0.989</td>
+                  <td>0.990</td>
+                  <td class="text-muted">3,892</td>
+                </tr>
+                <tr style="font-weight: 700; border-top: 1.5px solid var(--border-color); background: var(--gray-50);">
+                  <td>Macro Avg</td>
+                  <td>0.985</td>
+                  <td>0.986</td>
+                  <td>0.985</td>
+                  <td class="text-muted">5,137</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Explainable AI Framework -->
+        <div class="card mb-24 animate-fade-in-delay-3">
+          <div class="card-header" style="margin-bottom: 8px;">
+            <div>
+              <h2 class="card-title"><span class="card-icon">✨</span> Explainable AI Framework</h2>
+              <p class="text-xs text-muted" style="margin-top: 2px;">Feature extraction and Grad-CAM heatmap explanation for model transparency.</p>
+            </div>
+          </div>
+          
+          <div class="xai-section-grid" style="padding-top: 12px;">
+            <!-- Left Column: Compare -->
+            <div>
+              <h4 class="text-xs font-semibold text-muted mb-12">INPUT VS EXPLANATION</h4>
+              <div class="xai-compare">
+                <div class="xai-image-card">
+                  <span class="xai-label original">Original</span>
+                  <div class="xray-thumbnail" style="width: 100%; height: 100%;"></div>
+                  <span class="xai-caption">Input CXR</span>
+                </div>
+                <div class="xai-image-card">
+                  <span class="xai-label gradcam">Grad-CAM</span>
+                  <div class="heatmap-image" style="width: 100%; height: 100%;"></div>
+                  <span class="xai-caption">Heatmap</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: Flow -->
+            <div>
+              <h4 class="text-xs font-semibold text-muted mb-12">INFERENCE PIPELINE FLOW</h4>
+              <div class="pipeline-flow" style="display: flex; flex-direction: column; gap: 12px; align-items: start; background: var(--gray-50); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 16px;">
+                <div class="flex items-center gap-8 flex-wrap">
+                  <span class="pipeline-node">📷 Image</span>
+                  <span class="pipeline-arrow">➔</span>
+                  <span class="pipeline-node">⚙️ Preprocessing</span>
+                  <span class="pipeline-arrow">➔</span>
+                  <span class="pipeline-node">🧠 Model</span>
+                </div>
+                <div style="font-size: 14px; color: var(--text-muted); font-weight: bold; margin-left: 36px;">➔</div>
+                <div class="flex items-center gap-8 flex-wrap">
+                  <span class="pipeline-node active">✓ Prediction</span>
+                  <span class="pipeline-arrow">➔</span>
+                  <span class="pipeline-node highlight">✨ Grad-CAM</span>
+                  <span class="pipeline-arrow">➔</span>
+                  <span class="pipeline-node">📄 Report</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Chart Scripts -->
+  <script>
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.font.size = 10;
+    Chart.defaults.color = '#64748b';
+
+    // 1. Accuracy Chart
+    const accCtx = document.getElementById('accuracyChart').getContext('2d');
+    new Chart(accCtx, {
+      type: 'line',
+      data: {
+        labels: Array.from({length: 20}, (_, i) => i + 1),
+        datasets: [{
+          label: 'Train',
+          data: [60, 68, 73, 79, 82, 85, 88, 90, 92, 93, 94, 95, 96, 96.5, 97, 97.4, 97.8, 98, 98.2, 98.4],
+          borderColor: '#2563eb',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          tension: 0.3
+        }, {
+          label: 'Val',
+          data: [55, 62, 70, 75, 78, 80, 83, 85, 87, 89, 91, 92, 93, 93.5, 94, 94.2, 94.8, 95.2, 95.8, 96.0],
+          borderColor: '#10b981',
+          borderDash: [4, 4],
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          y: { min: 50, max: 100, grid: { color: '#f1f5f9' }, title: { display: true, text: 'Accuracy (%)' } },
+          x: { grid: { display: false }, title: { display: true, text: 'Epochs' } }
+        }
+      }
+    });
+
+    // 2. Loss Chart
+    const lossCtx = document.getElementById('lossChart').getContext('2d');
+    new Chart(lossCtx, {
+      type: 'line',
+      data: {
+        labels: Array.from({length: 20}, (_, i) => i + 1),
+        datasets: [{
+          label: 'Loss',
+          data: [1.5, 1.2, 0.95, 0.78, 0.62, 0.50, 0.41, 0.33, 0.28, 0.23, 0.19, 0.16, 0.13, 0.11, 0.09, 0.08, 0.07, 0.06, 0.05, 0.05],
+          borderColor: '#ef4444',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          tension: 0.3
+        }, {
+          label: 'Val Loss',
+          data: [1.8, 1.4, 1.15, 0.92, 0.75, 0.63, 0.52, 0.44, 0.38, 0.33, 0.29, 0.25, 0.22, 0.19, 0.17, 0.15, 0.13, 0.11, 0.09, 0.08],
+          borderColor: '#f97316',
+          borderDash: [4, 4],
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          y: { min: 0, max: 2, grid: { color: '#f1f5f9' }, title: { display: true, text: 'Loss' } },
+          x: { grid: { display: false }, title: { display: true, text: 'Epochs' } }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

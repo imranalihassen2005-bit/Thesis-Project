@@ -1,0 +1,436 @@
+{% extends "base.html" %}
+{% set active_page = 'chest-xray' %}
+
+{% block title %}TB-CAD Clinical Suite - Diagnostic Workbench{% endblock %}
+
+{% block head %}
+<style>
+  .workbench-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr 280px;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 1200px) {
+    .workbench-grid { grid-template-columns: 1fr; }
+  }
+  .viewer-image { width: 100%; height: 100%; object-fit: contain; position: absolute; top: 0; left: 0; z-index: 1; }
+  .viewer-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 2; opacity: 0.55; mix-blend-mode: screen; pointer-events: none; }
+  .viewer-placeholder { width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: radial-gradient(ellipse at center, #2d3748 0%, #1a202c 60%, #0d0f14 100%); display: flex; align-items: center; justify-content: center; z-index: 1; }
+  .processing-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; border-radius: var(--border-radius); }
+  .processing-overlay .spinner { width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.2); border-top-color: var(--blue-500); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .processing-overlay p { color: white; font-size: 14px; font-weight: 600; margin-top: 16px; }
+  #hidden-file-input { display: none; }
+  .confidence-breakdown { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .conf-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .conf-row .label { width: 90px; color: var(--text-secondary); font-weight: 500; }
+  .conf-row .bar-track { flex: 1; height: 6px; background: var(--gray-100); border-radius: 3px; overflow: hidden; }
+  .conf-row .bar-value { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+  .conf-row .pct { width: 50px; text-align: right; font-weight: 700; font-size: 12px; }
+  /* Webcam styles */
+  .webcam-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+  .webcam-modal-content { background: white; border-radius: var(--border-radius); padding: 24px; max-width: 520px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .webcam-modal-content h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .webcam-video-box { position: relative; width: 100%; aspect-ratio: 4/3; background: #000; border-radius: var(--border-radius-sm); overflow: hidden; margin-bottom: 16px; }
+  .webcam-video-box video { width: 100%; height: 100%; object-fit: cover; }
+  .webcam-video-box canvas { display: none; }
+  .webcam-result-overlay { position: absolute; bottom: 12px; left: 12px; right: 12px; background: rgba(0,0,0,0.7); border-radius: 8px; padding: 10px 14px; color: white; font-size: 13px; font-weight: 600; display: none; backdrop-filter: blur(6px); }
+  .webcam-actions { display: flex; gap: 10px; }
+  .webcam-actions button { flex: 1; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <h1>Diagnostic Workbench</h1>
+  <p class="page-subtitle">Upload a chest X-ray image to execute AI-based tuberculosis screening using CNN and Grad-CAM visualization.</p>
+</div>
+
+<!-- Workbench Grid -->
+<div class="workbench-grid mb-24">
+  <!-- Left Column -->
+  <div class="flex flex-col gap-20">
+    <!-- Import Chest X-ray Image -->
+    <div class="card animate-fade-in">
+      <div class="card-header" style="margin-bottom: 12px;">
+        <h2 class="card-title"><span class="card-icon">☁️</span> Import CXR Image</h2>
+      </div>
+      <div class="dropzone" id="dropzone" style="padding: 32px 16px; cursor: pointer;">
+        <div class="dropzone-icon">☁️</div>
+        <div class="dropzone-text" style="font-weight: 500; font-size: 12px; margin-bottom: 12px;" id="dropzone-label">Drag & drop frontal CXR image or choose file from workstation</div>
+        <button class="btn btn-primary btn-sm w-full" id="btn-select-file">Select File</button>
+        <div class="dropzone-hint">Supports PNG, JPG up to 25MB</div>
+        <input type="file" id="hidden-file-input" accept=".png,.jpg,.jpeg">
+      </div>
+    </div>
+
+    <!-- Webcam Capture Button -->
+    <div class="card animate-fade-in animate-fade-in-delay-1" style="padding: 12px 16px;">
+      <button class="btn btn-white w-full" id="btn-open-webcam" style="display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;">
+        📷 Open Webcam Capture
+      </button>
+    </div>
+
+    <!-- Preprocessing Pipeline -->
+    <div class="card animate-fade-in animate-fade-in-delay-1">
+      <div class="card-header" style="margin-bottom: 12px;">
+        <h2 class="card-title"><span class="card-icon">⚙️</span> Preprocessing</h2>
+      </div>
+      <div class="pipeline-step">
+        <span class="step-check" id="step-resize">○</span>
+        <span class="step-name">Image Resizing (224×224)</span>
+        <span class="step-value" id="step-resize-val">Waiting</span>
+      </div>
+      <div class="pipeline-step">
+        <span class="step-check" id="step-norm">○</span>
+        <span class="step-name">Pixel Normalization</span>
+        <span class="step-value" id="step-norm-val">Waiting</span>
+      </div>
+      <div class="pipeline-step">
+        <span class="step-check" id="step-quality">○</span>
+        <span class="step-name">CXR Quality Check</span>
+        <span class="step-value" id="step-quality-val">Waiting</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Center Column (Viewer) -->
+  <div class="card xray-viewer animate-fade-in animate-fade-in-delay-1" style="padding: 0; min-height: 480px; position: relative; overflow: hidden;">
+    <div class="viewer-toolbar">
+      <button title="Toggle Heatmap" id="btn-toggle-heatmap" style="display:none;">🔥</button>
+      <button title="Reset View" id="btn-reset-view" style="display:none;">↺</button>
+    </div>
+    <div class="patient-id-tag" id="patient-id-tag" style="display:none;"></div>
+
+    <!-- Placeholder -->
+    <div class="viewer-placeholder" id="viewer-placeholder">
+      <div class="animate-pulse" style="width: 240px; height: 320px; border: 1.5px solid rgba(255,255,255,0.15); border-radius: 60px 60px 40px 40px; display: flex; justify-content: space-between; padding: 24px 20px;">
+        <div style="width: 80px; height: 260px; border: 1.5px solid rgba(255,255,255,0.25); border-radius: 40px 10px 40px 30px; background: rgba(255,255,255,0.02);"></div>
+        <div style="width: 80px; height: 260px; border: 1.5px solid rgba(255,255,255,0.25); border-radius: 10px 40px 30px 40px; background: rgba(255,255,255,0.02);"></div>
+      </div>
+    </div>
+
+    <!-- Actual uploaded image -->
+    <img id="viewer-image" class="viewer-image" style="display:none;" alt="Uploaded CXR">
+    <!-- Grad-CAM overlay -->
+    <img id="viewer-heatmap" class="viewer-overlay" style="display:none;" alt="Grad-CAM Heatmap">
+
+    <!-- Processing overlay -->
+    <div class="processing-overlay" id="processing-overlay" style="display:none;">
+      <div class="spinner"></div>
+      <p id="processing-text">Analyzing X-ray...</p>
+    </div>
+  </div>
+
+  <!-- Right Column -->
+  <div class="flex flex-col gap-20">
+    <!-- Explainability -->
+    <div class="explain-panel card animate-fade-in animate-fade-in-delay-2" style="height: 100%; display: flex; flex-direction: column;">
+      <h3 class="card-title" style="font-size: 15px; margin-bottom: 12px;"><span class="card-icon">🧠</span> Explainability</h3>
+      <p style="font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 16px;">
+        Grad-CAM heatmaps generated to highlight salient lung regions contributing to the classification. Areas marked in red and yellow indicate high attention weight by the neural network.
+      </p>
+      <div class="clinical-interpretation" id="interpretation-box" style="flex: 1; background: var(--gray-50); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 16px;">
+        <h4 style="font-size: 9px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.5px; margin-bottom: 8px;">CLINICAL INTERPRETATION</h4>
+        <p id="interpretation-text" style="font-size: 12px; color: var(--text-primary); font-style: italic; line-height: 1.6;">
+          Upload a chest X-ray to receive AI-powered clinical interpretation.
+        </p>
+      </div>
+
+      <!-- Confidence breakdown appears after prediction -->
+      <div id="confidence-breakdown" class="confidence-breakdown" style="display:none; margin-top: 12px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Classification Result Bar -->
+<div class="classification-bar mb-24 animate-fade-in-delay-3" id="result-bar" style="display:none;">
+  <div class="classification-result">
+    <span class="status-dot animate-pulse" id="result-dot" style="width: 10px; height: 10px;"></span>
+    <div>
+      <div class="result-text" id="result-text">Classification: —</div>
+      <div class="confidence-label">Diagnosis Trajectory Prediction</div>
+    </div>
+  </div>
+  <div class="classification-result">
+    <div class="confidence-score" id="result-confidence">—%</div>
+    <div class="confidence-label" style="margin-left: 8px; font-weight: 600;">Confidence<br>Score</div>
+  </div>
+  <div class="classification-actions">
+    <a href="/ai-assistant" class="btn btn-white">🤖 Ask AI Assistant</a>
+    <a href="/visual-analytics" class="btn btn-primary">📊 Go to Analytics</a>
+  </div>
+</div>
+
+<!-- Webcam Modal -->
+<div class="webcam-modal" id="webcam-modal" style="display:none;">
+  <div class="webcam-modal-content">
+    <h3>📷 Webcam Capture <span style="font-size:11px;font-weight:400;color:var(--text-muted);">(Hold up a CXR image to the camera)</span></h3>
+    <div class="webcam-video-box">
+      <video id="webcam-video" autoplay playsinline muted></video>
+      <canvas id="webcam-canvas"></canvas>
+      <div class="webcam-result-overlay" id="webcam-result">
+        <span id="webcam-pred"></span> — <span id="webcam-conf"></span>
+      </div>
+    </div>
+    <div class="webcam-actions">
+      <button class="btn btn-primary" id="btn-webcam-capture">📸 Capture & Analyze</button>
+      <button class="btn btn-white" id="btn-webcam-close">✕ Close</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('hidden-file-input');
+  const btnSelect = document.getElementById('btn-select-file');
+
+  // Click handlers
+  btnSelect.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
+  dropzone.addEventListener('click', () => fileInput.click());
+
+  // Drag & Drop
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = 'var(--blue-500)'; dropzone.style.background = 'var(--blue-50)'; });
+  dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = ''; dropzone.style.background = ''; });
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.style.borderColor = ''; dropzone.style.background = '';
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) handleFile(fileInput.files[0]);
+  });
+
+  function handleFile(file) {
+    const allowed = ['image/png', 'image/jpeg', 'image/jpg'];
+    if (!allowed.includes(file.type)) {
+      showToast('Invalid file type. Use PNG or JPG.', 'error');
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      showToast('File too large. Max 25MB.', 'error');
+      return;
+    }
+
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById('viewer-placeholder').style.display = 'none';
+      const img = document.getElementById('viewer-image');
+      img.src = e.target.result;
+      img.style.display = 'block';
+      document.getElementById('viewer-heatmap').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+
+    // Update dropzone label
+    document.getElementById('dropzone-label').textContent = `Selected: ${file.name}`;
+
+    // Start prediction
+    runPrediction(file);
+  }
+
+  async function runPrediction(file) {
+    const overlay = document.getElementById('processing-overlay');
+    const processingText = document.getElementById('processing-text');
+    overlay.style.display = 'flex';
+
+    // Animate preprocessing steps
+    const steps = [
+      { check: 'step-resize', val: 'step-resize-val', text: 'Resizing...', done: '100%' },
+      { check: 'step-norm', val: 'step-norm-val', text: 'Normalizing...', done: '100%' },
+      { check: 'step-quality', val: 'step-quality-val', text: 'Checking...', done: '100%' }
+    ];
+
+    for (let i = 0; i < steps.length; i++) {
+      const s = steps[i];
+      document.getElementById(s.check).textContent = '⏳';
+      document.getElementById(s.val).textContent = s.text;
+      await sleep(300);
+      document.getElementById(s.check).textContent = '✓';
+      document.getElementById(s.check).style.color = 'var(--green-600)';
+      document.getElementById(s.val).textContent = s.done;
+      document.getElementById(s.val).style.color = 'var(--green-600)';
+    }
+
+    processingText.textContent = 'Running EfficientNetB0 inference...';
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const resp = await fetch('/api/predict', { method: 'POST', body: formData });
+      const data = await resp.json();
+
+      if (!resp.ok) throw new Error(data.error || 'Prediction failed');
+
+      processingText.textContent = 'Generating Grad-CAM heatmap...';
+      await sleep(500);
+
+      overlay.style.display = 'none';
+      displayResult(data);
+      showToast(`Analysis complete: ${data.prediction} (${data.confidence}%)`, 'success');
+
+    } catch (err) {
+      overlay.style.display = 'none';
+      showToast(err.message, 'error');
+    }
+  }
+
+  function displayResult(data) {
+    // Show uploaded image from server
+    const img = document.getElementById('viewer-image');
+    img.src = data.image_path;
+    img.style.display = 'block';
+    document.getElementById('viewer-placeholder').style.display = 'none';
+
+    // Show Grad-CAM if available
+    if (data.heatmap_path) {
+      const heatmap = document.getElementById('viewer-heatmap');
+      heatmap.src = data.heatmap_path;
+      heatmap.style.display = 'block';
+
+      const btnToggle = document.getElementById('btn-toggle-heatmap');
+      btnToggle.style.display = '';
+      btnToggle.onclick = () => {
+        heatmap.style.display = heatmap.style.display === 'none' ? 'block' : 'none';
+      };
+    }
+
+    // Patient ID tag
+    const tag = document.getElementById('patient-id-tag');
+    tag.style.display = '';
+    tag.textContent = `ID: #CXR-${String(data.scan_id).padStart(4, '0')}`;
+
+    // Reset button
+    const btnReset = document.getElementById('btn-reset-view');
+    btnReset.style.display = '';
+    btnReset.onclick = resetView;
+
+    // Interpretation text
+    const interps = {
+      'Tuberculosis': `Identifying suspicious pulmonary patterns consistent with upper lobe infiltration and consolidation. High correlation with classical tuberculosis presentation. Severity: ${data.severity}.`,
+      'Pneumonia': `Detected radiographic features consistent with pneumonia, including areas of consolidation and possible ground-glass opacities. Severity: ${data.severity}.`,
+      'Normal': 'No significant pathological findings detected. Lung fields appear clear without evidence of consolidation, cavitation, or infiltrates.'
+    };
+    document.getElementById('interpretation-text').textContent = interps[data.prediction] || 'Analysis complete.';
+
+    // Confidence breakdown
+    const breakdown = document.getElementById('confidence-breakdown');
+    breakdown.style.display = '';
+    breakdown.innerHTML = '';
+    const colors = { 'Normal': 'var(--green-500)', 'Pneumonia': 'var(--orange-500)', 'Tuberculosis': 'var(--red-500)' };
+    for (const [cls, pct] of Object.entries(data.all_confidences)) {
+      breakdown.innerHTML += `
+        <div class="conf-row">
+          <span class="label">${cls}</span>
+          <div class="bar-track"><div class="bar-value" style="width:${pct}%;background:${colors[cls]}"></div></div>
+          <span class="pct" style="color:${colors[cls]}">${pct.toFixed(1)}%</span>
+        </div>`;
+    }
+
+    // Result bar
+    const bar = document.getElementById('result-bar');
+    bar.style.display = '';
+    const dot = document.getElementById('result-dot');
+    dot.className = `status-dot ${data.prediction === 'Tuberculosis' ? 'red' : data.prediction === 'Pneumonia' ? 'orange' : 'green'} animate-pulse`;
+    document.getElementById('result-text').textContent = `Classification: ${data.prediction === 'Tuberculosis' ? 'TB-Positive Probable' : data.prediction === 'Pneumonia' ? 'Pneumonia Detected' : 'Normal — No Pathology'}`;
+    document.getElementById('result-confidence').textContent = `${data.confidence}%`;
+  }
+
+  function resetView() {
+    document.getElementById('viewer-image').style.display = 'none';
+    document.getElementById('viewer-heatmap').style.display = 'none';
+    document.getElementById('viewer-placeholder').style.display = 'flex';
+    document.getElementById('result-bar').style.display = 'none';
+    document.getElementById('confidence-breakdown').style.display = 'none';
+    document.getElementById('patient-id-tag').style.display = 'none';
+    document.getElementById('btn-toggle-heatmap').style.display = 'none';
+    document.getElementById('btn-reset-view').style.display = 'none';
+    document.getElementById('interpretation-text').textContent = 'Upload a chest X-ray to receive AI-powered clinical interpretation.';
+    document.getElementById('dropzone-label').textContent = 'Drag & drop frontal CXR image or choose file from workstation';
+    // Reset pipeline
+    ['resize', 'norm', 'quality'].forEach(s => {
+      document.getElementById(`step-${s}`).textContent = '○';
+      document.getElementById(`step-${s}`).style.color = '';
+      document.getElementById(`step-${s}-val`).textContent = 'Waiting';
+      document.getElementById(`step-${s}-val`).style.color = '';
+    });
+    fileInput.value = '';
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // ── Webcam Feature ──
+  let webcamStream = null;
+
+  document.getElementById('btn-open-webcam').addEventListener('click', openWebcam);
+  document.getElementById('btn-webcam-close').addEventListener('click', closeWebcam);
+  document.getElementById('btn-webcam-capture').addEventListener('click', captureAndAnalyze);
+
+  async function openWebcam() {
+    const modal = document.getElementById('webcam-modal');
+    const video = document.getElementById('webcam-video');
+    try {
+      webcamStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: 640, height: 480 } });
+      video.srcObject = webcamStream;
+      modal.style.display = 'flex';
+      document.getElementById('webcam-result').style.display = 'none';
+    } catch (err) {
+      showToast('Camera access denied or not available.', 'error');
+    }
+  }
+
+  function closeWebcam() {
+    document.getElementById('webcam-modal').style.display = 'none';
+    if (webcamStream) {
+      webcamStream.getTracks().forEach(t => t.stop());
+      webcamStream = null;
+    }
+  }
+
+  async function captureAndAnalyze() {
+    const video = document.getElementById('webcam-video');
+    const canvas = document.getElementById('webcam-canvas');
+    const btn = document.getElementById('btn-webcam-capture');
+
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const frameData = canvas.toDataURL('image/jpeg', 0.85);
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Analyzing...';
+
+    try {
+      const resp = await fetch('/api/webcam-predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ frame: frameData, include_gradcam: true })
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Webcam prediction failed');
+
+      const overlay = document.getElementById('webcam-result');
+      const predColors = { 'Tuberculosis': '#ef4444', 'Pneumonia': '#f59e0b', 'Normal': '#10b981' };
+      document.getElementById('webcam-pred').textContent = data.prediction;
+      document.getElementById('webcam-pred').style.color = predColors[data.prediction] || '#fff';
+      document.getElementById('webcam-conf').textContent = `${data.confidence}% confidence`;
+      overlay.style.display = 'block';
+
+      showToast(`Webcam: ${data.prediction} (${data.confidence}%) in ${data.processing_time}s`, 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+
+    btn.disabled = false;
+    btn.textContent = '📸 Capture & Analyze';
+  }
+</script>
+{% endblock %}

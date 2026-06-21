@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% set active_page = 'home' %}
+
+{% block title %}TB-CAD Clinical Suite - Home Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <h1 id="greeting-text">Welcome, Doctor</h1>
+  <p class="page-subtitle" id="subtitle-text">AI tuberculosis diagnostics are ready. Loading dashboard data...</p>
+</div>
+
+<!-- Stats Overview Row -->
+<div class="grid-4 mb-24">
+  <!-- Total Analyses -->
+  <div class="stat-card animate-fade-in">
+    <div class="stat-label">
+      <span class="stat-icon" style="background: var(--blue-50); color: var(--blue-600);">📊</span>
+      Total Analyses
+    </div>
+    <div class="stat-value" id="total-analyses">0</div>
+    <div class="stat-change" id="total-change" style="color: var(--text-secondary);">Loading...</div>
+  </div>
+
+  <!-- Most Frequent Finding -->
+  <div class="stat-card animate-fade-in animate-fade-in-delay-1">
+    <div class="stat-label">
+      <span class="stat-icon" style="background: var(--gray-100); color: var(--gray-600);">🧬</span>
+      Most Frequent Finding
+    </div>
+    <div class="stat-value" id="most-frequent" style="font-size: 18px; margin: 4px 0 8px; font-weight: 700;">—</div>
+    <div id="distribution-badges" class="flex gap-8"></div>
+  </div>
+
+  <!-- Model Accuracy -->
+  <div class="stat-card animate-fade-in animate-fade-in-delay-2">
+    <div class="stat-label">
+      <span class="stat-icon" style="background: var(--green-50); color: var(--green-600);">✅</span>
+      Model Accuracy
+    </div>
+    <div class="stat-value" id="model-accuracy" style="color: var(--green-600); display: flex; align-items: center; gap: 8px;">
+      —% <span class="status-dot green animate-pulse"></span>
+    </div>
+    <div class="stat-change" style="color: var(--text-secondary);">Validated on clinical dataset</div>
+  </div>
+
+  <!-- Model Performance -->
+  <div class="stat-card animate-fade-in animate-fade-in-delay-3">
+    <div class="stat-label">
+      <span class="stat-icon" style="background: var(--blue-50); color: var(--blue-600);">🎯</span>
+      Model Performance
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;">
+        <span style="color:var(--text-secondary)">TB Precision</span>
+        <span id="tb-precision-val" style="font-weight:700;">—%</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;">
+        <span style="color:var(--text-secondary)">TB Recall</span>
+        <span id="tb-recall-val" style="font-weight:700;">—%</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;">
+        <span style="color:var(--text-secondary)">F1 Score</span>
+        <span id="f1-score-val" style="font-weight:700;">—%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sidebar Grid Layout -->
+<div class="grid-sidebar-layout-wide">
+  <!-- Left Column (Recent Scans) -->
+  <div class="card animate-fade-in-delay-2">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-icon">🔬</span> Recent CXR Scans</h2>
+      <a href="/visual-analytics" class="btn btn-ghost btn-sm" style="color: var(--blue-600);">View All</a>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Scan ID</th>
+            <th>Time/Date</th>
+            <th>AI Finding</th>
+            <th>Confidence</th>
+            <th>Severity</th>
+          </tr>
+        </thead>
+        <tbody id="recent-scans-body">
+          <tr>
+            <td colspan="5" style="text-align:center;color:var(--text-secondary);padding:32px;">
+              No scans yet. <a href="/chest-xray" style="color:var(--blue-600);font-weight:600;">Start your first analysis →</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Right Column -->
+  <div class="flex flex-col gap-24">
+    <!-- Quick Actions -->
+    <div class="card animate-fade-in-delay-3">
+      <div class="card-header" style="margin-bottom: 12px;">
+        <h2 class="card-title"><span class="card-icon">⚡</span> Quick Actions</h2>
+      </div>
+      <div class="quick-action-items">
+        <a href="/chest-xray" class="quick-action-item">
+          <div class="qa-left">
+            <span class="qa-icon">🔬</span>
+            <span class="qa-text">New Scan</span>
+          </div>
+          <span class="qa-arrow">›</span>
+        </a>
+        <a href="/ai-assistant" class="quick-action-item">
+          <div class="qa-left">
+            <span class="qa-icon">🤖</span>
+            <span class="qa-text">AI Assistant</span>
+          </div>
+          <span class="qa-arrow">›</span>
+        </a>
+        <a href="/visual-analytics" class="quick-action-item">
+          <div class="qa-left">
+            <span class="qa-icon">📊</span>
+            <span class="qa-text">View System Analytics</span>
+          </div>
+          <span class="qa-arrow">›</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Protocol Card -->
+    <div class="protocol-card animate-fade-in-delay-4">
+      <div class="protocol-label">
+        <span>📋</span> Protocol
+      </div>
+      <h3>Optimizing Chest X-ray Screening</h3>
+      <p>Using standardized frontal chest X-rays and Grad-CAM for explainable TB detection.</p>
+      <button class="btn-protocol" onclick="window.location.href='/model-insights'">Read Protocol</button>
+    </div>
+
+    <!-- Engine Status -->
+    <div class="card engine-status animate-fade-in-delay-4">
+      <div class="card-header" style="margin-bottom: 12px;">
+        <h2 class="card-title"><span class="card-icon">⚙️</span> Engine Status</h2>
+      </div>
+      <div class="es-row">
+        <span class="es-label">Status</span>
+        <span class="es-value" style="color: var(--green-600);"><span class="status-dot green animate-pulse"></span> Active</span>
+      </div>
+      <div class="es-row">
+        <span class="es-label">Model</span>
+        <span class="es-value">EfficientNetB0</span>
+      </div>
+      <div class="es-row">
+        <span class="es-label">Total Predictions</span>
+        <span class="es-value" id="engine-total">0</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Load dashboard data
+  async function loadDashboard() {
+    try {
+      const data = await fetchAPI('/api/stats');
+      
+      // Update greeting based on time
+      const hour = new Date().getHours();
+      const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
+      document.getElementById('greeting-text').textContent = `${greeting}, Doctor`;
+      
+      // Total analyses
+      document.getElementById('total-analyses').textContent = data.total_scans.toLocaleString();
+      document.getElementById('total-change').textContent = data.total_scans === 0 
+        ? 'No scans yet' : `${data.total_scans} total analyses completed`;
+      document.getElementById('engine-total').textContent = data.total_scans;
+      
+      // Subtitle
+      document.getElementById('subtitle-text').textContent = data.total_scans === 0
+        ? 'AI tuberculosis diagnostics are ready. Upload your first chest X-ray to begin.'
+        : `AI tuberculosis diagnostics are ready. ${data.total_scans} analyses completed.`;
+      
+      // Most frequent finding
+      if (data.most_frequent) {
+        document.getElementById('most-frequent').textContent = data.most_frequent.prediction;
+      } else {
+        document.getElementById('most-frequent').textContent = 'No data yet';
+      }
+      
+      // Distribution badges
+      const badgeContainer = document.getElementById('distribution-badges');
+      badgeContainer.innerHTML = '';
+      if (data.distribution && Object.keys(data.distribution).length > 0) {
+        for (const [cls, count] of Object.entries(data.distribution)) {
+          const badge = document.createElement('span');
+          badge.className = `badge ${getBadgeClass(cls)}`;
+          badge.textContent = `${cls}: ${count}`;
+          badgeContainer.appendChild(badge);
+        }
+      }
+      
+      // Model metrics
+      const m = data.model_metrics;
+      document.getElementById('model-accuracy').innerHTML = 
+        `${m.accuracy}% <span class="status-dot green animate-pulse"></span>`;
+      document.getElementById('tb-precision-val').textContent = `${m.tb_precision}%`;
+      document.getElementById('tb-recall-val').textContent = `${m.tb_recall}%`;
+      document.getElementById('f1-score-val').textContent = `${m.f1_score}%`;
+      
+      // Recent scans table
+      const tbody = document.getElementById('recent-scans-body');
+      if (data.recent_scans && data.recent_scans.length > 0) {
+        tbody.innerHTML = data.recent_scans.map(scan => {
+          const conf = scan.confidence;
+          const severity = conf >= 85 ? 'High' : conf >= 70 ? 'Moderate' : 'Low';
+          const severityStyle = scan.prediction === 'Normal' ? 'color:var(--text-muted)' : 
+            conf >= 85 ? 'color:var(--red-600);font-weight:700' : 
+            conf >= 70 ? 'color:var(--orange-600);font-weight:600' : 'color:var(--text-secondary)';
+          
+          return `<tr>
+            <td class="font-semibold">#CXR-${String(scan.id).padStart(4, '0')}</td>
+            <td class="text-muted">${formatDate(scan.upload_date)}</td>
+            <td><span class="badge ${getBadgeClass(scan.prediction)}">${scan.prediction}</span></td>
+            <td>
+              <div class="confidence-bar">
+                <div class="bar"><div class="bar-fill" style="width:${conf}%;background:${getBarColor(scan.prediction)};"></div></div>
+                <span class="value" style="color:${getBarColor(scan.prediction)}">${conf.toFixed(1)}%</span>
+              </div>
+            </td>
+            <td style="${severityStyle}">${scan.prediction === 'Normal' ? '—' : severity}</td>
+          </tr>`;
+        }).join('');
+      }
+    } catch (err) {
+      console.error('Dashboard load error:', err);
+    }
+  }
+  
+  loadDashboard();
+</script>
+{% endblock %}

@@ -1,0 +1,7 @@
+flask
+tensorflow
+opencv-python-headless
+numpy
+pandas
+matplotlib
+Pillow

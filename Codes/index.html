@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TB-CAD Clinical Suite - Home Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">TB</div>
+        <div class="sidebar-brand-text">
+          <h1>TB-CAD Clinical Suite</h1>
+          <span>v1.0 AI Diagnostic System</span>
+        </div>
+      </div>
+      <div class="sidebar-cta">
+        <a href="chest-xray.html" class="btn-start-analysis">▶ Start Analysis</a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="nav-item active"><span class="nav-icon">🏠</span> Home</a>
+        <a href="chest-xray.html" class="nav-item"><span class="nav-icon">🔬</span> Chest X-ray Analysis</a>
+        <a href="visual-analytics.html" class="nav-item"><span class="nav-icon">📊</span> Visual Analytics</a>
+        <a href="ai-assistant.html" class="nav-item"><span class="nav-icon">🤖</span> AI Assistant</a>
+        <a href="clinical-recommendations.html" class="nav-item"><span class="nav-icon">📋</span> Clinical Recommendations</a>
+        <a href="model-insights.html" class="nav-item"><span class="nav-icon">✨</span> Model Insights</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <a href="#" class="nav-item"><span class="nav-icon">💬</span> Support</a>
+        <a href="#" class="nav-item"><span class="nav-icon">🚪</span> Sign Out</a>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="topbar-brand-label">TB-CAD AI</span>
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search patient ID, name, or scan...">
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn">🔔<span class="notification-dot"></span></button>
+          <button class="topbar-icon-btn">⚙️</button>
+          <div class="user-info">
+            <div class="user-info-text">
+              <div class="user-name">Dr. Specialist</div>
+              <div class="user-role">Clinical Lead</div>
+            </div>
+            <div class="user-avatar">DS</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+          <h1>Morning, Doctor</h1>
+          <p class="page-subtitle">AI tuberculosis diagnostics are ready. 12 pending chest X-ray scans.</p>
+        </div>
+
+        <!-- Stats Overview Row -->
+        <div class="grid-4 mb-24">
+          <!-- Total Analyses -->
+          <div class="stat-card animate-fade-in">
+            <div class="stat-label">
+              <span class="stat-icon" style="background: var(--blue-50); color: var(--blue-600);">📊</span>
+              Total Analyses
+            </div>
+            <div class="stat-value">1,284</div>
+            <div class="stat-change positive">↗ +12% this month</div>
+          </div>
+
+          <!-- Most Frequent Finding -->
+          <div class="stat-card animate-fade-in animate-fade-in-delay-1">
+            <div class="stat-label">
+              <span class="stat-icon" style="background: var(--gray-100); color: var(--gray-600);">🧬</span>
+              Most Frequent Finding
+            </div>
+            <div class="stat-value" style="font-size: 18px; margin: 4px 0 8px; font-weight: 700;">TB-Indicative Pattern</div>
+            <div class="flex gap-8">
+              <span class="badge badge-orange">Cavitary Lesions</span>
+              <span class="badge badge-blue">Infiltrates</span>
+            </div>
+          </div>
+
+          <!-- Model Accuracy -->
+          <div class="stat-card animate-fade-in animate-fade-in-delay-2">
+            <div class="stat-label">
+              <span class="stat-icon" style="background: var(--green-50); color: var(--green-600);">✅</span>
+              Model Accuracy
+            </div>
+            <div class="stat-value" style="color: var(--green-600); display: flex; align-items: center; gap: 8px;">
+              98.4% <span class="status-dot green animate-pulse"></span>
+            </div>
+            <div class="stat-change" style="color: var(--text-secondary);">Validated on clinical dataset</div>
+          </div>
+
+          <!-- Next Consultation -->
+          <div class="stat-card animate-fade-in animate-fade-in-delay-3">
+            <div class="stat-label">
+              <span class="stat-icon" style="background: var(--blue-50); color: var(--blue-600);">📅</span>
+              Next Consultation
+            </div>
+            <div class="stat-value" style="font-size: 24px;">10:30 AM</div>
+            <div class="flex justify-between items-center mt-4">
+              <span class="text-xs text-muted">👤 Ahmed Hassan</span>
+              <button class="btn btn-white btn-sm" style="padding: 4px 8px; font-size: 10px;">Prepare File</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar Grid Layout -->
+        <div class="grid-sidebar-layout-wide">
+          <!-- Left Column (Recent Scans) -->
+          <div class="card animate-fade-in-delay-2">
+            <div class="card-header">
+              <h2 class="card-title"><span class="card-icon">🔬</span> Recent CXR Scans</h2>
+              <a href="#" class="btn btn-ghost btn-sm" style="color: var(--blue-600);">View All</a>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Scan ID</th>
+                    <th>Time/Date</th>
+                    <th>AI Finding</th>
+                    <th>Confidence</th>
+                    <th>Grade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="font-semibold">#CXR-9021</td>
+                    <td class="text-muted">Today 08:45 AM</td>
+                    <td><span class="badge badge-red">TB-Positive Probable</span></td>
+                    <td>
+                      <div class="confidence-bar">
+                        <div class="bar"><div class="bar-fill" style="width: 94%; background: var(--red-500);"></div></div>
+                        <span class="value" style="color: var(--red-600);">94%</span>
+                      </div>
+                    </td>
+                    <td class="text-muted font-semibold">Clinical AI Grade</td>
+                  </tr>
+                  <tr>
+                    <td class="font-semibold">#CXR-9020</td>
+                    <td class="text-muted">Yesterday 04:12 PM</td>
+                    <td><span class="badge badge-green">Normal Chest X-ray</span></td>
+                    <td>
+                      <div class="confidence-bar">
+                        <div class="bar"><div class="bar-fill" style="width: 89%; background: var(--green-500);"></div></div>
+                        <span class="value" style="color: var(--green-600);">89%</span>
+                      </div>
+                    </td>
+                    <td class="text-muted">-</td>
+                  </tr>
+                  <tr>
+                    <td class="font-semibold">#CXR-9019</td>
+                    <td class="text-muted">Oct 24 11:30 AM</td>
+                    <td><span class="badge badge-orange">TB-Suspected Findings</span></td>
+                    <td>
+                      <div class="confidence-bar">
+                        <div class="bar"><div class="bar-fill" style="width: 90%; background: var(--orange-500);"></div></div>
+                        <span class="value" style="color: var(--orange-600);">90%</span>
+                      </div>
+                    </td>
+                    <td class="text-muted">-</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Right Column (Quick Actions & Status) -->
+          <div class="flex flex-col gap-24">
+            <!-- Quick Actions -->
+            <div class="card animate-fade-in-delay-3">
+              <div class="card-header" style="margin-bottom: 12px;">
+                <h2 class="card-title"><span class="card-icon">⚡</span> Quick Actions</h2>
+              </div>
+              <div class="quick-action-items">
+                <a href="chest-xray.html" class="quick-action-item">
+                  <div class="qa-left">
+                    <span class="qa-icon">🔬</span>
+                    <span class="qa-text">New Scan</span>
+                  </div>
+                  <span class="qa-arrow">›</span>
+                </a>
+                <a href="ai-assistant.html" class="quick-action-item">
+                  <div class="qa-left">
+                    <span class="qa-icon">🤖</span>
+                    <span class="qa-text">AI Assistant</span>
+                  </div>
+                  <span class="qa-arrow">›</span>
+                </a>
+                <a href="visual-analytics.html" class="quick-action-item">
+                  <div class="qa-left">
+                    <span class="qa-icon">📊</span>
+                    <span class="qa-text">View System Analytics</span>
+                  </div>
+                  <span class="qa-arrow">›</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Protocol Card -->
+            <div class="protocol-card animate-fade-in-delay-4">
+              <div class="protocol-label">
+                <span>📋</span> Protocol
+              </div>
+              <h3>Optimizing Chest X-ray Screening</h3>
+              <p>Using standardized frontal chest X-rays and Grad-CAM for explainable TB detection.</p>
+              <button class="btn-protocol">Read Protocol</button>
+            </div>
+
+            <!-- Engine Status -->
+            <div class="card engine-status animate-fade-in-delay-4">
+              <div class="card-header" style="margin-bottom: 12px;">
+                <h2 class="card-title"><span class="card-icon">⚙️</span> Engine Status</h2>
+              </div>
+              <div class="es-row">
+                <span class="es-label">Status</span>
+                <span class="es-value" style="color: var(--green-600);"><span class="status-dot green animate-pulse"></span> Active</span>
+              </div>
+              <div class="es-row">
+                <span class="es-label">Processing Load</span>
+                <span class="es-value">24%</span>
+              </div>
+              <div class="progress-bar mb-8" style="height: 4px;">
+                <div class="progress-fill blue" style="width: 24%;"></div>
+              </div>
+              <div class="es-row">
+                <span class="es-label">API Latency</span>
+                <span class="es-value">42ms</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

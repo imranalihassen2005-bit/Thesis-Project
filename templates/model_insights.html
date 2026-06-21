@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+{% set active_page = 'insights' %}
+
+{% block title %}TB-CAD Clinical Suite - Model Insights{% endblock %}
+
+{% block head %}
+<style>
+  .model-top-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr 1fr;
+    gap: 20px;
+  }
+  .xai-section-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .model-compare-tabs { display: none; }
+  .model-compare-tabs button { padding: 6px 16px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); background: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .model-compare-tabs button.active { background: var(--blue-600); color: white; border-color: var(--blue-600); }
+  @media (max-width: 1200px) {
+    .model-top-grid { grid-template-columns: 1fr; }
+    .xai-section-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header Row -->
+<div class="page-header page-header-row">
+  <div>
+    <h1>Model Performance & Architecture</h1>
+    <p class="page-subtitle">🟢 EfficientNetB0 TB-CAD Engine v1.0 • Transfer learning for CXR classification</p>
+  </div>
+  
+  <!-- Highlight Metrics Badges -->
+  <div class="metric-badges animate-fade-in">
+    <div class="metric-badge green">
+      <div class="mb-label">MODEL ACCURACY</div>
+      <div class="mb-value" id="badge-accuracy">—%</div>
+    </div>
+    <div class="metric-badge blue">
+      <div class="mb-label">F1-SCORE</div>
+      <div class="mb-value" id="badge-f1">—%</div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Top Section Grid -->
+<div class="model-top-grid mb-24">
+  <!-- Architecture Pipeline -->
+  <div class="card animate-fade-in" style="display: flex; flex-direction: column;">
+    <div class="card-header" style="margin-bottom: 12px;">
+      <h2 class="card-title">⚙️ Architecture Pipeline</h2>
+    </div>
+    <div class="arch-cards" style="flex: 1;">
+      <div class="arch-card">
+        <div class="arch-icon gray">🧠</div>
+        <div>
+          <h4>Backbone Network</h4>
+          <p>EfficientNetB0 (ImageNet Pre-trained)</p>
+        </div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-icon gray">🔗</div>
+        <div>
+          <h4>Classifier Head</h4>
+          <p>Dense Layers + Softmax (3-class)</p>
+        </div>
+      </div>
+      <div class="arch-card" style="border-color: var(--blue-200); background: var(--blue-50);">
+        <div class="arch-icon blue">🔵</div>
+        <div>
+          <h4 style="color: var(--blue-700);">XAI Module</h4>
+          <p>Grad-CAM Feature Extractor</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Training vs Validation Accuracy -->
+  <div class="card animate-fade-in animate-fade-in-delay-1">
+    <div class="card-header">
+      <h2 class="card-title">Training vs Validation Accuracy</h2>
+    </div>
+    <div class="chart-container" style="height: 220px;">
+      <canvas id="accuracyChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Loss Curves -->
+  <div class="card animate-fade-in animate-fade-in-delay-1">
+    <div class="card-header">
+      <h2 class="card-title">Loss Curves</h2>
+    </div>
+    <div class="chart-container" style="height: 220px;">
+      <canvas id="lossChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Per-Class Metrics Table -->
+<div class="card mb-24 animate-fade-in-delay-2">
+  <div class="card-header">
+    <h2 class="card-title">Per-Class Metrics</h2>
+    <span class="text-xs text-muted font-semibold" id="model-name-label">EfficientNetB0 (100 epochs)</span>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Class</th>
+          <th>Precision</th>
+          <th>Recall</th>
+          <th>F1-Score</th>
+          <th>Support</th>
+        </tr>
+      </thead>
+      <tbody id="per-class-body">
+        <tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:24px;">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Model Summary -->
+<div class="card mb-24 animate-fade-in-delay-2">
+  <div class="card-header">
+    <h2 class="card-title"><span class="card-icon">📊</span> Model Performance Summary</h2>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody id="summary-body">
+        <tr><td colspan="2" style="text-align:center;color:var(--text-secondary);padding:24px;">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Explainable AI Framework -->
+<div class="card mb-24 animate-fade-in-delay-3">
+  <div class="card-header" style="margin-bottom: 8px;">
+    <div>
+      <h2 class="card-title"><span class="card-icon">✨</span> Explainable AI Framework</h2>
+      <p class="text-xs text-muted" style="margin-top: 2px;">Feature extraction and Grad-CAM heatmap explanation for model transparency.</p>
+    </div>
+  </div>
+  
+  <div class="xai-section-grid" style="padding-top: 12px;">
+    <!-- Left Column: Compare -->
+    <div>
+      <h4 class="text-xs font-semibold text-muted mb-12">INPUT VS EXPLANATION</h4>
+      <div class="xai-compare">
+        <div class="xai-image-card">
+          <span class="xai-label original">Original</span>
+          <div class="xray-thumbnail" style="width: 100%; height: 100%;"></div>
+          <span class="xai-caption">Input CXR</span>
+        </div>
+        <div class="xai-image-card">
+          <span class="xai-label gradcam">Grad-CAM</span>
+          <div class="heatmap-image" style="width: 100%; height: 100%;"></div>
+          <span class="xai-caption">Heatmap</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Flow -->
+    <div>
+      <h4 class="text-xs font-semibold text-muted mb-12">INFERENCE PIPELINE FLOW</h4>
+      <div class="pipeline-flow" style="display: flex; flex-direction: column; gap: 12px; align-items: start; background: var(--gray-50); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 16px;">
+        <div class="flex items-center gap-8 flex-wrap">
+          <span class="pipeline-node">📷 Image</span>
+          <span class="pipeline-arrow">➔</span>
+          <span class="pipeline-node">⚙️ Preprocessing</span>
+          <span class="pipeline-arrow">➔</span>
+          <span class="pipeline-node">🧠 Model</span>
+        </div>
+        <div style="font-size: 14px; color: var(--text-muted); font-weight: bold; margin-left: 36px;">➔</div>
+        <div class="flex items-center gap-8 flex-wrap">
+          <span class="pipeline-node active">✓ Prediction</span>
+          <span class="pipeline-arrow">➔</span>
+          <span class="pipeline-node highlight">✨ Grad-CAM</span>
+          <span class="pipeline-arrow">➔</span>
+          <span class="pipeline-node">📄 Report</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.font.size = 10;
+  Chart.defaults.color = '#64748b';
+
+  let accChart, lossChartInst;
+
+  async function loadMetrics() {
+    try {
+      const data = await fetchAPI('/api/model-metrics');
+      const metrics = data.metrics || [];
+      
+      if (metrics.length > 0) {
+        const m = metrics[0];
+        renderModel(m);
+        renderSummary(m);
+      }
+    } catch (err) {
+      console.error('Metrics load error:', err);
+    }
+  }
+
+  function renderModel(m) {
+    if (!m) return;
+
+    // Badges
+    document.getElementById('badge-accuracy').textContent = `${m.accuracy}%`;
+    document.getElementById('badge-f1').textContent = `${m.f1_score}%`;
+    document.getElementById('model-name-label').textContent = 'EfficientNetB0 (100 epochs)';
+
+    // Per-class table
+    if (m.extra_metrics && m.extra_metrics.per_class) {
+      const pc = m.extra_metrics.per_class;
+      const tbody = document.getElementById('per-class-body');
+      const colors = { 'Normal': 'var(--green-600)', 'Pneumonia': 'var(--orange-600)', 'Tuberculosis': 'var(--red-600)' };
+      let rows = '';
+      for (const [cls, vals] of Object.entries(pc)) {
+        rows += `<tr>
+          <td class="font-semibold" style="color:${colors[cls]}">${cls}</td>
+          <td>${vals.precision.toFixed(3)}</td>
+          <td>${vals.recall.toFixed(3)}</td>
+          <td>${vals.f1.toFixed(2)}</td>
+          <td class="text-muted">${vals.support}</td>
+        </tr>`;
+      }
+      rows += `<tr style="font-weight:700;border-top:1.5px solid var(--border-color);background:var(--gray-50);">
+        <td>Weighted Avg</td>
+        <td>${(m.precision_score / 100).toFixed(3)}</td>
+        <td>${(m.recall / 100).toFixed(3)}</td>
+        <td>${(m.f1_score / 100).toFixed(2)}</td>
+        <td class="text-muted">741</td>
+      </tr>`;
+      tbody.innerHTML = rows;
+    }
+
+    // Charts
+    if (m.extra_metrics && m.extra_metrics.training_history) {
+      renderAccChart(m.extra_metrics.training_history);
+      renderLossChart(m.extra_metrics.training_history);
+    }
+  }
+
+  function renderSummary(m) {
+    if (!m) return;
+
+    const metrics = [
+      { name: 'Accuracy', value: m.accuracy, unit: '%' },
+      { name: 'Precision', value: m.precision_score, unit: '%' },
+      { name: 'Recall', value: m.recall, unit: '%' },
+      { name: 'F1-Score', value: m.f1_score, unit: '%' },
+      { name: 'AUC', value: m.auc, unit: '' },
+      { name: 'TB Precision', value: m.tb_precision, unit: '%' },
+      { name: 'TB Recall', value: m.tb_recall, unit: '%' }
+    ];
+
+    const tbody = document.getElementById('summary-body');
+    tbody.innerHTML = metrics.map(r => `<tr>
+      <td class="font-semibold">${r.name}</td>
+      <td style="font-weight:700;">${r.value}${r.unit}</td>
+    </tr>`).join('');
+  }
+
+  function renderAccChart(hist) {
+    const epochs = hist.accuracy.map((_, i) => i + 1);
+    if (accChart) accChart.destroy();
+    accChart = new Chart(document.getElementById('accuracyChart'), {
+      type: 'line',
+      data: {
+        labels: epochs,
+        datasets: [{
+          label: 'Train',
+          data: hist.accuracy.map(v => v * 100),
+          borderColor: '#2563eb',
+          backgroundColor: 'transparent',
+          borderWidth: 2, tension: 0.3
+        }, {
+          label: 'Val',
+          data: hist.val_accuracy.map(v => v * 100),
+          borderColor: '#10b981',
+          borderDash: [4, 4],
+          backgroundColor: 'transparent',
+          borderWidth: 1.5, tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          y: { min: 30, max: 100, grid: { color: '#f1f5f9' }, title: { display: true, text: 'Accuracy (%)' } },
+          x: { grid: { display: false }, title: { display: true, text: 'Epochs' } }
+        }
+      }
+    });
+  }
+
+  function renderLossChart(hist) {
+    const epochs = hist.loss.map((_, i) => i + 1);
+    if (lossChartInst) lossChartInst.destroy();
+    lossChartInst = new Chart(document.getElementById('lossChart'), {
+      type: 'line',
+      data: {
+        labels: epochs,
+        datasets: [{
+          label: 'Loss',
+          data: hist.loss,
+          borderColor: '#ef4444',
+          backgroundColor: 'transparent',
+          borderWidth: 2, tension: 0.3
+        }, {
+          label: 'Val Loss',
+          data: hist.val_loss,
+          borderColor: '#f97316',
+          borderDash: [4, 4],
+          backgroundColor: 'transparent',
+          borderWidth: 1.5, tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          y: { min: 0, grid: { color: '#f1f5f9' }, title: { display: true, text: 'Loss' } },
+          x: { grid: { display: false }, title: { display: true, text: 'Epochs' } }
+        }
+      }
+    });
+  }
+
+  loadMetrics();
+</script>
+{% endblock %}

@@ -1,0 +1,1103 @@
+{% extends "base.html" %}
+{% set active_page = 'analytics' %}
+
+{% block title %}TB-CAD Clinical Suite - Visual Analytics{% endblock %}
+
+{% block head %}
+<style>
+  .analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .analytics-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+  }
+  .full-width {
+    grid-column: 1 / -1;
+  }
+  .chart-box {
+    min-height: 300px;
+  }
+  .chart-box-sm {
+    min-height: 240px;
+  }
+
+  /* ── Model Selector Tabs ── */
+  .model-tabs {
+    display: flex;
+    gap: 0;
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    background: var(--gray-50);
+  }
+  .model-tab {
+    padding: 10px 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    position: relative;
+  }
+  .model-tab:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 20%;
+    height: 60%;
+    width: 1px;
+    background: var(--border-color);
+  }
+  .model-tab:hover {
+    background: var(--gray-100);
+    color: var(--text-primary);
+  }
+  .model-tab.active {
+    background: var(--blue-600);
+    color: white;
+  }
+  .model-tab.active::after {
+    display: none;
+  }
+
+  /* ── Section Dividers ── */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 32px 0 20px;
+  }
+  .section-divider h2 {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-primary);
+    white-space: nowrap;
+    letter-spacing: -0.3px;
+  }
+  .section-divider .divider-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+  }
+  .section-divider .section-badge {
+    padding: 4px 12px;
+    border-radius: var(--border-radius-full);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .section-badge.blue { background: var(--blue-50); color: var(--blue-700); }
+  .section-badge.green { background: var(--green-50); color: var(--green-700); }
+  .section-badge.orange { background: var(--orange-50); color: var(--orange-600); }
+
+  /* ── Error Heatmap Grid ── */
+  .error-heatmap {
+    display: grid;
+    grid-template-columns: 120px repeat(3, 1fr);
+    gap: 3px;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  .eh-header {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 8px 4px;
+  }
+  .eh-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+  }
+  .eh-cell {
+    padding: 14px 8px;
+    text-align: center;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    transition: all 0.2s;
+    cursor: default;
+  }
+  .eh-cell:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* ── Grad-CAM Compare ── */
+  .gradcam-compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .gradcam-model-card {
+    background: var(--gray-900);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    position: relative;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .gradcam-model-card .gc-model-label {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 4px 12px;
+    border-radius: var(--border-radius-xs);
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--blue-600);
+    color: white;
+    z-index: 2;
+  }
+  .gradcam-model-card .gc-placeholder {
+    color: var(--gray-400);
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.6;
+  }
+  .gradcam-model-card .gc-placeholder .gc-icon {
+    font-size: 48px;
+    opacity: 0.3;
+    margin-bottom: 12px;
+  }
+
+  /* ── Comparison Badge Row ── */
+  .comparison-badges {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .comp-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: var(--border-radius-full);
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--gray-50);
+    border: 1px solid var(--border-color);
+  }
+  .comp-badge .cb-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  @media (max-width: 1024px) {
+    .analytics-grid { grid-template-columns: 1fr; }
+    .analytics-grid-3 { grid-template-columns: 1fr; }
+    .gradcam-compare-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header page-header-row">
+  <div>
+    <h1>Visual Analytics Dashboard</h1>
+    <p class="page-subtitle">Comprehensive multi-model analysis, performance comparison, and thesis-grade visualizations.</p>
+  </div>
+  <div class="flex gap-12 items-center">
+    <button class="btn btn-primary btn-sm" onclick="loadAllAnalytics()">🔄 Refresh Data</button>
+  </div>
+</div>
+
+<!-- Metrics Cards Row -->
+<div class="metric-row mb-24 flex gap-16 w-full">
+  <div class="mini-stat">
+    <div class="ms-value" id="ms-total">0</div>
+    <div class="ms-label">Total Scans</div>
+    <div class="ms-change text-muted" id="ms-total-change">—</div>
+  </div>
+  <div class="mini-stat">
+    <div class="ms-value" style="color: var(--red-500);" id="ms-tb-rate">0%</div>
+    <div class="ms-label">TB-Positive Rate</div>
+    <div class="ms-change text-muted">From scan data</div>
+  </div>
+  <div class="mini-stat">
+    <div class="ms-value" style="color: var(--blue-600);" id="ms-accuracy">—%</div>
+    <div class="ms-label">Best Model Accuracy</div>
+    <div class="ms-change text-muted">100-epoch model</div>
+  </div>
+  <div class="mini-stat">
+    <div class="ms-value" style="color: var(--green-600);" id="ms-f1">—%</div>
+    <div class="ms-label">Best F1-Score</div>
+    <div class="ms-change text-muted">Weighted avg</div>
+  </div>
+</div>
+
+<!-- Live Scan Charts -->
+<div class="analytics-grid mb-24">
+  <!-- Prediction Distribution (Pie) -->
+  <div class="card animate-fade-in">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-icon">🧬</span> Prediction Distribution</h2>
+    </div>
+    <div class="chart-container chart-box-sm">
+      <canvas id="distributionChart"></canvas>
+    </div>
+  </div>
+  <!-- Confidence Score Distribution (Bar) -->
+  <div class="card animate-fade-in animate-fade-in-delay-1">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-icon">📊</span> Confidence Score Distribution</h2>
+    </div>
+    <div class="chart-container chart-box-sm">
+      <canvas id="confidenceDistChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!--  SECTION A: PER-MODEL TRAINING INFOGRAPHICS        -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="section-divider">
+  <h2>📈 Per-Model Training Infographics</h2>
+  <div class="divider-line"></div>
+  <span class="section-badge blue">Model Selector</span>
+</div>
+
+<!-- Model Selector Tabs -->
+<div class="flex items-center justify-between mb-16">
+  <div class="model-tabs" id="model-tabs">
+    <button class="model-tab" data-model="multiclass_model_10_epochs.keras" onclick="selectModel(this)">⚡ EfficientNetB0 (10 epochs)</button>
+    <button class="model-tab active" data-model="multiclass_model_100_epochs.keras" onclick="selectModel(this)">🏆 EfficientNetB0 (100 epochs)</button>
+    <button class="model-tab" data-model="multiclass_densenet121.keras" onclick="selectModel(this)">🔬 DenseNet121 (Keras)</button>
+  </div>
+  <div class="flex gap-8 items-center">
+    <span class="text-xs text-muted font-semibold" id="selected-model-label">EfficientNetB0 (100 epochs)</span>
+  </div>
+</div>
+
+<div class="analytics-grid mb-24">
+  <!-- Training vs Validation Accuracy -->
+  <div class="card animate-fade-in">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-icon">📈</span> Training vs Validation Accuracy</h2>
+    </div>
+    <div class="chart-container chart-box">
+      <canvas id="accuracyChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Loss Curves -->
+  <div class="card animate-fade-in animate-fade-in-delay-1">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-icon">📉</span> Loss Curves</h2>
+    </div>
+    <div class="chart-container chart-box">
+      <canvas id="lossChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Confusion Matrix -->
+  <div class="card animate-fade-in animate-fade-in-delay-1">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-icon">🔲</span> Confusion Matrix</h2>
+      <span class="text-xs text-muted font-semibold" id="cm-model-label"></span>
+    </div>
+    <div style="padding: 16px 0;">
+      <div class="confusion-matrix" id="confusion-matrix">
+        <div></div>
+        <div class="cm-header">PRED NORMAL</div>
+        <div class="cm-header">PRED PNEUMONIA</div>
+        <div class="cm-header">PRED TB</div>
+        <div class="cm-header" style="writing-mode: vertical-lr; transform: rotate(180deg); padding: 0;">ACTUAL NORMAL</div>
+        <div class="cm-cell tp" id="cm-00">—</div>
+        <div class="cm-cell fn" id="cm-01">—</div>
+        <div class="cm-cell fn" id="cm-02">—</div>
+        <div class="cm-header" style="writing-mode: vertical-lr; transform: rotate(180deg); padding: 0;">ACTUAL PNEUMONIA</div>
+        <div class="cm-cell fp" id="cm-10">—</div>
+        <div class="cm-cell tp" id="cm-11">—</div>
+        <div class="cm-cell fn" id="cm-12">—</div>
+        <div class="cm-header" style="writing-mode: vertical-lr; transform: rotate(180deg); padding: 0;">ACTUAL TB</div>
+        <div class="cm-cell fp" id="cm-20">—</div>
+        <div class="cm-cell fp" id="cm-21">—</div>
+        <div class="cm-cell tp" id="cm-22">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TP/TN/FP/FN Per-Class Grouped Bar Chart -->
+  <div class="card animate-fade-in animate-fade-in-delay-2">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-icon">🎯</span> TP / TN / FP / FN Per Class</h2>
+    </div>
+    <div class="chart-container chart-box">
+      <canvas id="tptnfpfnChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Per-Class Metrics Table -->
+  <div class="card full-width animate-fade-in animate-fade-in-delay-2">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-icon">📋</span> Per-Class Performance Metrics</h2>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Class</th>
+            <th>Precision</th>
+            <th>Recall</th>
+            <th>F1-Score</th>
+            <th>Support</th>
+          </tr>
+        </thead>
+        <tbody id="per-class-body">
+          <tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:24px;">Loading metrics...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!--  SECTION B: MULTI-MODEL COMPARISON                 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="section-divider">
+  <h2>⚖️ Multi-Model Comparison</h2>
+  <div class="divider-line"></div>
+  <span class="section-badge green">All 3 Models</span>
+</div>
+
+<!-- Model Legend -->
+<div class="comparison-badges mb-16">
+  <div class="comp-badge"><div class="cb-dot" style="background:#f59e0b;"></div> EffNet-B0 10ep</div>
+  <div class="comp-badge"><div class="cb-dot" style="background:#2563eb;"></div> EffNet-B0 100ep</div>
+  <div class="comp-badge"><div class="cb-dot" style="background:#8b5cf6;"></div> DenseNet121</div>
+</div>
+
+<div class="analytics-grid mb-24">
+  <!-- ROC/AUC Multi-Model -->
+  <div class="card animate-fade-in">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-icon">📐</span> ROC / AUC Curves</h2>
+      <span class="text-xs text-muted font-semibold">Macro-average per model</span>
+    </div>
+    <div class="chart-container chart-box">
+      <canvas id="rocChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Precision-Recall Multi-Model -->
+  <div class="card animate-fade-in animate-fade-in-delay-1">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-icon">🎯</span> Precision-Recall Curves</h2>
+      <span class="text-xs text-muted font-semibold">Macro-average per model</span>
+    </div>
+    <div class="chart-container chart-box">
+      <canvas id="prChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Comprehensive 3-Model Comparison Table -->
+  <div class="card full-width animate-fade-in animate-fade-in-delay-2">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-icon">📊</span> Comprehensive Model Comparison</h2>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th style="color:#f59e0b;">EffNet-B0 (10ep)</th>
+            <th style="color:#2563eb;">EffNet-B0 (100ep) 🏆</th>
+            <th style="color:#8b5cf6;">DenseNet121</th>
+          </tr>
+        </thead>
+        <tbody id="comparison-body">
+          <tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:24px;">Loading comparison...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Computational Efficiency vs Accuracy Scatter -->
+  <div class="card animate-fade-in animate-fade-in-delay-2">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-icon">⚡</span> Efficiency vs. Accuracy</h2>
+      <span class="text-xs text-muted font-semibold">Bubble size = memory</span>
+    </div>
+    <div class="chart-container chart-box">
+      <canvas id="efficiencyChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Error Heatmap -->
+  <div class="card animate-fade-in animate-fade-in-delay-3">
+    <div class="card-header">
+      <h2 class="card-title"><span class="card-icon">🔥</span> Misclassification Error Heatmap</h2>
+      <span class="text-xs text-muted font-semibold">Error rate by model × class</span>
+    </div>
+    <div style="padding: 16px 0;">
+      <div class="error-heatmap" id="error-heatmap">
+        <!-- Populated dynamically -->
+      </div>
+      <div style="display:flex;justify-content:center;gap:16px;margin-top:12px;">
+        <span class="text-xs text-muted">🟢 Low Error</span>
+        <span class="text-xs text-muted">🟡 Moderate</span>
+        <span class="text-xs text-muted">🔴 High Error</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!--  SECTION C: INTERPRETABILITY / GRAD-CAM            -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="section-divider">
+  <h2>✨ Feature Activation Maps (Grad-CAM)</h2>
+  <div class="divider-line"></div>
+  <span class="section-badge orange">Interpretability</span>
+</div>
+
+<div class="card mb-24 animate-fade-in">
+  <div class="card-header">
+    <h2 class="card-title"><span class="card-icon">🧠</span> Model Attention Comparison — EfficientNetB0 vs DenseNet121</h2>
+    <span class="text-xs text-muted font-semibold">Regions the models focus on during inference</span>
+  </div>
+  <div class="gradcam-compare-grid" style="padding-top: 12px;">
+    <div class="gradcam-model-card" id="gc-effnet">
+      <span class="gc-model-label">EfficientNetB0 (100ep)</span>
+      <div class="gc-placeholder">
+        <div class="gc-icon">🫁</div>
+        <div>Upload a chest X-ray on the <a href="/chest-xray" style="color:var(--blue-400);font-weight:600;">Analysis page</a><br>to generate EfficientNetB0 Grad-CAM heatmaps</div>
+      </div>
+    </div>
+    <div class="gradcam-model-card" id="gc-densenet">
+      <span class="gc-model-label" style="background:var(--green-600);">DenseNet121</span>
+      <div class="gc-placeholder">
+        <div class="gc-icon">🫁</div>
+        <div>DenseNet121 Grad-CAM activation<br>maps will appear here for comparison</div>
+      </div>
+    </div>
+  </div>
+  <div style="background:var(--gray-50);border:1px solid var(--border-color);border-radius:var(--border-radius-sm);padding:14px 18px;margin-top:16px;">
+    <p class="text-xs text-muted" style="line-height:1.6;">
+      <strong style="color:var(--text-primary);">How Grad-CAM Works:</strong> Gradient-weighted Class Activation Mapping highlights regions of the input image that most influenced the model's prediction. Red/warm zones indicate high importance; cool/blue zones indicate low importance. Comparing both models reveals whether they focus on clinically relevant lung regions.
+    </p>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!--  SECTION D: SCAN HISTORY                           -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="section-divider">
+  <h2>🔬 Scan History</h2>
+  <div class="divider-line"></div>
+</div>
+
+<div class="card mb-24 animate-fade-in">
+  <div class="card-header">
+    <h2 class="card-title"><span class="card-icon">🔬</span> Full Scan History</h2>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Scan ID</th>
+          <th>Time/Date</th>
+          <th>AI Finding</th>
+          <th>Confidence</th>
+          <th>Processing</th>
+        </tr>
+      </thead>
+      <tbody id="scan-history-body">
+        <tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:24px;">Loading scan history...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = '#64748b';
+
+  // ── State ──
+  let allModels = [];
+  let selectedModelName = 'multiclass_model_100_epochs.keras';
+  let distributionChart, confidenceChart, accuracyChart, lossChart, tptnChart;
+  let rocChart, prChart, efficiencyChart;
+
+  const MODEL_COLORS = {
+    'multiclass_model_10_epochs.keras':  { main: '#f59e0b', light: 'rgba(245,158,11,0.1)', dash: [] },
+    'multiclass_model_100_epochs.keras': { main: '#2563eb', light: 'rgba(37,99,235,0.1)',   dash: [] },
+    'multiclass_densenet121.keras':      { main: '#8b5cf6', light: 'rgba(139,92,246,0.1)',  dash: [5, 5] }
+  };
+
+  // ── Main Load ──
+  async function loadAllAnalytics() {
+    try {
+      const [analytics, stats, scans, allModelData] = await Promise.all([
+        fetchAPI('/api/analytics'),
+        fetchAPI('/api/stats'),
+        fetchAPI('/api/scans?limit=50'),
+        fetchAPI('/api/all-model-metrics')
+      ]);
+
+      allModels = allModelData.models || [];
+
+      // Top metrics
+      document.getElementById('ms-total').textContent = stats.total_scans.toLocaleString();
+      document.getElementById('ms-total-change').textContent = stats.total_scans === 0 ? 'No scans yet' : `${stats.total_scans} scans analyzed`;
+      document.getElementById('ms-accuracy').textContent = `${stats.model_metrics.accuracy}%`;
+      document.getElementById('ms-f1').textContent = `${stats.model_metrics.f1_score}%`;
+
+      // TB rate
+      const dist = analytics.prediction_distribution || {};
+      const total = Object.values(dist).reduce((a, b) => a + b, 0);
+      const tbCount = dist['Tuberculosis'] || 0;
+      const tbRate = total > 0 ? ((tbCount / total) * 100).toFixed(1) : '0.0';
+      document.getElementById('ms-tb-rate').textContent = `${tbRate}%`;
+
+      // Live scan charts
+      renderDistributionChart(dist);
+      renderConfidenceChart(analytics.confidence_distribution || {});
+
+      // Per-model charts (selected model)
+      renderSelectedModel();
+
+      // Multi-model comparison charts
+      renderROCChart();
+      renderPRChart();
+      renderComparisonTable();
+      renderEfficiencyChart();
+      renderErrorHeatmap();
+
+      // Scan history
+      renderScanHistory(scans);
+
+      // Grad-CAM (check for latest scan)
+      loadGradCamPreview();
+
+    } catch (err) {
+      console.error('Analytics load error:', err);
+    }
+  }
+
+  // ── Model Selector ──
+  function selectModel(btn) {
+    document.querySelectorAll('.model-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    selectedModelName = btn.dataset.model;
+    renderSelectedModel();
+  }
+
+  function getSelectedModel() {
+    return allModels.find(m => m.model_name === selectedModelName);
+  }
+
+  function renderSelectedModel() {
+    const m = getSelectedModel();
+    if (!m || !m.extra_metrics) return;
+
+    const em = m.extra_metrics;
+    const displayName = em.display_name || m.model_name;
+    document.getElementById('selected-model-label').textContent = displayName;
+    document.getElementById('cm-model-label').textContent = displayName;
+
+    // Training charts
+    if (em.training_history) {
+      renderAccuracyChart(em.training_history);
+      renderLossChart(em.training_history);
+    }
+
+    // Confusion matrix
+    if (em.confusion_matrix) {
+      const cm = em.confusion_matrix;
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          const el = document.getElementById(`cm-${i}${j}`);
+          if (el) el.textContent = cm[i][j];
+        }
+      }
+    }
+
+    // TP/TN/FP/FN chart
+    if (em.tp_tn_fp_fn) {
+      renderTPTNChart(em.tp_tn_fp_fn);
+    }
+
+    // Per-class table
+    if (em.per_class) {
+      const pc = em.per_class;
+      const tbody = document.getElementById('per-class-body');
+      const colors = { 'Normal': 'var(--green-600)', 'Pneumonia': 'var(--orange-600)', 'Tuberculosis': 'var(--red-600)' };
+      let rows = '';
+      for (const [cls, vals] of Object.entries(pc)) {
+        rows += `<tr>
+          <td class="font-semibold" style="color:${colors[cls]}">${cls}</td>
+          <td>${vals.precision.toFixed(3)}</td>
+          <td>${vals.recall.toFixed(3)}</td>
+          <td>${vals.f1.toFixed(2)}</td>
+          <td class="text-muted">${vals.support}</td>
+        </tr>`;
+      }
+      rows += `<tr style="font-weight:700;border-top:1.5px solid var(--border-color);background:var(--gray-50);">
+        <td>Weighted Avg</td>
+        <td>${(m.precision_score / 100).toFixed(3)}</td>
+        <td>${(m.recall / 100).toFixed(3)}</td>
+        <td>${(m.f1_score / 100).toFixed(2)}</td>
+        <td class="text-muted">741</td>
+      </tr>`;
+      tbody.innerHTML = rows;
+    }
+  }
+
+  // ═══════════════════════════════════════
+  //  CHART RENDERERS
+  // ═══════════════════════════════════════
+
+  function renderDistributionChart(dist) {
+    const labels = Object.keys(dist);
+    const values = Object.values(dist);
+    const colors = { 'Normal': '#10b981', 'Pneumonia': '#f59e0b', 'Tuberculosis': '#ef4444' };
+    if (distributionChart) distributionChart.destroy();
+    distributionChart = new Chart(document.getElementById('distributionChart'), {
+      type: 'doughnut',
+      data: {
+        labels: labels.length ? labels : ['No Data'],
+        datasets: [{
+          data: values.length ? values : [1],
+          backgroundColor: labels.length ? labels.map(l => colors[l] || '#94a3b8') : ['#e2e8f0'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'right' } }
+      }
+    });
+  }
+
+  function renderConfidenceChart(dist) {
+    const labels = Object.keys(dist);
+    const values = Object.values(dist);
+    if (confidenceChart) confidenceChart.destroy();
+    confidenceChart = new Chart(document.getElementById('confidenceDistChart'), {
+      type: 'bar',
+      data: {
+        labels: labels.map(l => l + '%'),
+        datasets: [{
+          label: 'Scans',
+          data: values,
+          backgroundColor: ['#f59e0b', '#eab308', '#3b82f6', '#10b981', '#15803d'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { grid: { color: '#f1f5f9' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  function renderAccuracyChart(hist) {
+    const epochs = hist.accuracy.map((_, i) => i + 1);
+    if (accuracyChart) accuracyChart.destroy();
+    accuracyChart = new Chart(document.getElementById('accuracyChart'), {
+      type: 'line',
+      data: {
+        labels: epochs,
+        datasets: [{
+          label: 'Train Accuracy',
+          data: hist.accuracy.map(v => v * 100),
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37, 99, 235, 0.05)',
+          fill: true, borderWidth: 2, tension: 0.3, pointRadius: epochs.length > 20 ? 0 : 3
+        }, {
+          label: 'Val Accuracy',
+          data: hist.val_accuracy.map(v => v * 100),
+          borderColor: '#10b981',
+          borderDash: [4, 4],
+          backgroundColor: 'transparent',
+          borderWidth: 1.5, tension: 0.3, pointRadius: epochs.length > 20 ? 0 : 3
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          y: { min: 30, max: 100, grid: { color: '#f1f5f9' }, title: { display: true, text: 'Accuracy (%)' } },
+          x: { grid: { display: false }, title: { display: true, text: 'Epoch' } }
+        }
+      }
+    });
+  }
+
+  function renderLossChart(hist) {
+    const epochs = hist.loss.map((_, i) => i + 1);
+    if (lossChart) lossChart.destroy();
+    lossChart = new Chart(document.getElementById('lossChart'), {
+      type: 'line',
+      data: {
+        labels: epochs,
+        datasets: [{
+          label: 'Train Loss',
+          data: hist.loss,
+          borderColor: '#ef4444',
+          backgroundColor: 'transparent',
+          borderWidth: 2, tension: 0.3, pointRadius: epochs.length > 20 ? 0 : 3
+        }, {
+          label: 'Val Loss',
+          data: hist.val_loss,
+          borderColor: '#f97316',
+          borderDash: [4, 4],
+          backgroundColor: 'transparent',
+          borderWidth: 1.5, tension: 0.3, pointRadius: epochs.length > 20 ? 0 : 3
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          y: { min: 0, grid: { color: '#f1f5f9' }, title: { display: true, text: 'Loss' } },
+          x: { grid: { display: false }, title: { display: true, text: 'Epoch' } }
+        }
+      }
+    });
+  }
+
+  function renderTPTNChart(data) {
+    const classNames = ['Normal', 'Pneumonia', 'Tuberculosis'];
+    const tp = classNames.map(c => data[c].TP);
+    const tn = classNames.map(c => data[c].TN);
+    const fp = classNames.map(c => data[c].FP);
+    const fn = classNames.map(c => data[c].FN);
+
+    if (tptnChart) tptnChart.destroy();
+    tptnChart = new Chart(document.getElementById('tptnfpfnChart'), {
+      type: 'bar',
+      data: {
+        labels: classNames,
+        datasets: [
+          { label: 'TP', data: tp, backgroundColor: '#10b981', borderRadius: 3 },
+          { label: 'TN', data: tn, backgroundColor: '#3b82f6', borderRadius: 3 },
+          { label: 'FP', data: fp, backgroundColor: '#ef4444', borderRadius: 3 },
+          { label: 'FN', data: fn, backgroundColor: '#f59e0b', borderRadius: 3 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          y: { grid: { color: '#f1f5f9' }, title: { display: true, text: 'Count' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // ── Multi-Model ROC Chart ──
+  function renderROCChart() {
+    if (rocChart) rocChart.destroy();
+    const datasets = [];
+
+    allModels.forEach(m => {
+      const em = m.extra_metrics;
+      if (!em || !em.roc_data) return;
+      const c = MODEL_COLORS[m.model_name] || { main: '#64748b', dash: [] };
+      const shortName = em.short_name || m.model_name;
+
+      // Macro-average: use TB class as representative (most challenging)
+      const roc = em.roc_data['Tuberculosis'] || em.roc_data['Normal'];
+      const auc = em.roc_data.macro_auc || roc.auc;
+
+      const points = roc.fpr.map((fpr, i) => ({ x: fpr, y: roc.tpr[i] }));
+
+      datasets.push({
+        label: `${shortName} (AUC: ${auc.toFixed(2)})`,
+        data: points,
+        borderColor: c.main,
+        backgroundColor: c.light,
+        borderWidth: 2.5,
+        borderDash: c.dash,
+        tension: 0.3,
+        pointRadius: 0,
+        fill: false
+      });
+    });
+
+    // Random baseline
+    datasets.push({
+      label: 'Random (AUC: 0.50)',
+      data: [{ x: 0, y: 0 }, { x: 1, y: 1 }],
+      borderColor: '#cbd5e1',
+      borderWidth: 1,
+      borderDash: [8, 4],
+      pointRadius: 0,
+      fill: false
+    });
+
+    rocChart = new Chart(document.getElementById('rocChart'), {
+      type: 'scatter',
+      data: { datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        showLine: true,
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } },
+        scales: {
+          x: { min: 0, max: 1, title: { display: true, text: 'False Positive Rate' }, grid: { color: '#f1f5f9' } },
+          y: { min: 0, max: 1, title: { display: true, text: 'True Positive Rate' }, grid: { color: '#f1f5f9' } }
+        }
+      }
+    });
+  }
+
+  // ── Multi-Model PR Chart ──
+  function renderPRChart() {
+    if (prChart) prChart.destroy();
+    const datasets = [];
+
+    allModels.forEach(m => {
+      const em = m.extra_metrics;
+      if (!em || !em.pr_data) return;
+      const c = MODEL_COLORS[m.model_name] || { main: '#64748b', dash: [] };
+      const shortName = em.short_name || m.model_name;
+
+      const pr = em.pr_data['Tuberculosis'] || em.pr_data['Normal'];
+      const ap = em.pr_data.macro_ap || 0;
+
+      const points = pr.recall.map((r, i) => ({ x: r, y: pr.precision[i] }));
+
+      datasets.push({
+        label: `${shortName} (AP: ${ap.toFixed(2)})`,
+        data: points,
+        borderColor: c.main,
+        backgroundColor: c.light,
+        borderWidth: 2.5,
+        borderDash: c.dash,
+        tension: 0.3,
+        pointRadius: 0,
+        fill: false
+      });
+    });
+
+    prChart = new Chart(document.getElementById('prChart'), {
+      type: 'scatter',
+      data: { datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        showLine: true,
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } },
+        scales: {
+          x: { min: 0, max: 1, title: { display: true, text: 'Recall' }, grid: { color: '#f1f5f9' } },
+          y: { min: 0, max: 1, title: { display: true, text: 'Precision' }, grid: { color: '#f1f5f9' } }
+        }
+      }
+    });
+  }
+
+  // ── Comparison Table ──
+  function renderComparisonTable() {
+    const m10 = allModels.find(m => m.model_name === 'multiclass_model_10_epochs.keras');
+    const m100 = allModels.find(m => m.model_name === 'multiclass_model_100_epochs.keras');
+    const mDN = allModels.find(m => m.model_name === 'multiclass_densenet121.keras');
+
+    if (!m10 || !m100 || !mDN) return;
+
+    const metrics = [
+      { name: 'Accuracy', key: 'accuracy', unit: '%', best: 'max' },
+      { name: 'Precision', key: 'precision_score', unit: '%', best: 'max' },
+      { name: 'Recall', key: 'recall', unit: '%', best: 'max' },
+      { name: 'F1-Score', key: 'f1_score', unit: '%', best: 'max' },
+      { name: 'AUC', key: 'auc', unit: '', best: 'max' },
+      { name: 'TB Precision', key: 'tb_precision', unit: '%', best: 'max' },
+      { name: 'TB Recall', key: 'tb_recall', unit: '%', best: 'max' },
+      { name: 'Parameters (M)', key: null, values: [
+        m10.extra_metrics?.computational_profile?.params_m,
+        m100.extra_metrics?.computational_profile?.params_m,
+        mDN.extra_metrics?.computational_profile?.params_m
+      ], unit: '', best: 'min' },
+      { name: 'Inference (ms)', key: null, values: [
+        m10.extra_metrics?.computational_profile?.inference_ms,
+        m100.extra_metrics?.computational_profile?.inference_ms,
+        mDN.extra_metrics?.computational_profile?.inference_ms
+      ], unit: '', best: 'min' },
+      { name: 'Memory (MB)', key: null, values: [
+        m10.extra_metrics?.computational_profile?.memory_mb,
+        m100.extra_metrics?.computational_profile?.memory_mb,
+        mDN.extra_metrics?.computational_profile?.memory_mb
+      ], unit: '', best: 'min' }
+    ];
+
+    const tbody = document.getElementById('comparison-body');
+    tbody.innerHTML = metrics.map(metric => {
+      let vals;
+      if (metric.key) {
+        vals = [m10[metric.key], m100[metric.key], mDN[metric.key]];
+      } else {
+        vals = metric.values;
+      }
+
+      // Determine best
+      const bestIdx = metric.best === 'max'
+        ? vals.indexOf(Math.max(...vals))
+        : vals.indexOf(Math.min(...vals));
+
+      return `<tr>
+        <td class="font-semibold">${metric.name}</td>
+        ${vals.map((v, i) => `<td style="${i === bestIdx ? 'font-weight:800;color:var(--green-600);' : ''}">${v != null ? (typeof v === 'number' && v < 1 && metric.key === 'auc' ? v.toFixed(2) : v) : '—'}${metric.unit}</td>`).join('')}
+      </tr>`;
+    }).join('');
+  }
+
+  // ── Efficiency Scatter Plot ──
+  function renderEfficiencyChart() {
+    if (efficiencyChart) efficiencyChart.destroy();
+    const datasets = [];
+
+    allModels.forEach(m => {
+      const em = m.extra_metrics;
+      if (!em || !em.computational_profile) return;
+      const cp = em.computational_profile;
+      const c = MODEL_COLORS[m.model_name] || { main: '#64748b' };
+      const shortName = em.short_name || m.model_name;
+
+      datasets.push({
+        label: shortName,
+        data: [{ x: cp.inference_ms, y: cp.accuracy, r: Math.max(8, cp.memory_mb / 5) }],
+        backgroundColor: c.main + '80',
+        borderColor: c.main,
+        borderWidth: 2
+      });
+    });
+
+    efficiencyChart = new Chart(document.getElementById('efficiencyChart'), {
+      type: 'bubble',
+      data: { datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 10 } } },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const d = ctx.raw;
+                return `${ctx.dataset.label}: ${d.y}% acc, ${d.x}ms latency`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: { title: { display: true, text: 'Inference Latency (ms)' }, grid: { color: '#f1f5f9' }, min: 20, max: 55 },
+          y: { title: { display: true, text: 'Accuracy (%)' }, grid: { color: '#f1f5f9' }, min: 70, max: 92 }
+        }
+      }
+    });
+  }
+
+  // ── Error Heatmap ──
+  function renderErrorHeatmap() {
+    const classes = ['Normal', 'Pneumonia', 'Tuberculosis'];
+    const container = document.getElementById('error-heatmap');
+
+    // Header row
+    let html = '<div class="eh-header"></div>';
+    allModels.forEach(m => {
+      const shortName = m.extra_metrics?.short_name || m.model_name.replace('.keras', '');
+      html += `<div class="eh-header">${shortName}</div>`;
+    });
+
+    // Data rows
+    classes.forEach(cls => {
+      html += `<div class="eh-label">${cls}</div>`;
+      allModels.forEach(m => {
+        const em = m.extra_metrics;
+        if (!em || !em.tp_tn_fp_fn || !em.tp_tn_fp_fn[cls]) {
+          html += `<div class="eh-cell" style="background:var(--gray-200);color:var(--text-secondary);">—</div>`;
+          return;
+        }
+        const d = em.tp_tn_fp_fn[cls];
+        const total = d.TP + d.FN;
+        const errorRate = total > 0 ? ((d.FN / total) * 100).toFixed(1) : 0;
+        const er = parseFloat(errorRate);
+
+        // Color gradient: green (low) -> yellow -> red (high)
+        let bg;
+        if (er < 10) bg = '#10b981';
+        else if (er < 20) bg = '#eab308';
+        else if (er < 30) bg = '#f59e0b';
+        else bg = '#ef4444';
+
+        html += `<div class="eh-cell" style="background:${bg};" title="${cls}: ${errorRate}% error rate (${d.FN} FN / ${total} total)">${errorRate}%</div>`;
+      });
+    });
+
+    container.innerHTML = html;
+  }
+
+  // ── Scan History ──
+  function renderScanHistory(scans) {
+    if (scans.scans && scans.scans.length > 0) {
+      const tbody = document.getElementById('scan-history-body');
+      tbody.innerHTML = scans.scans.map(s => `<tr>
+        <td class="font-semibold">#CXR-${String(s.id).padStart(4, '0')}</td>
+        <td class="text-muted">${formatDate(s.upload_date)}</td>
+        <td><span class="badge ${getBadgeClass(s.prediction)}">${s.prediction}</span></td>
+        <td>
+          <div class="confidence-bar">
+            <div class="bar"><div class="bar-fill" style="width:${s.confidence}%;background:${getBarColor(s.prediction)};"></div></div>
+            <span class="value" style="color:${getBarColor(s.prediction)}">${s.confidence.toFixed(1)}%</span>
+          </div>
+        </td>
+        <td class="text-muted">${s.processing_time ? s.processing_time + 's' : '—'}</td>
+      </tr>`).join('');
+    } else {
+      document.getElementById('scan-history-body').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:24px;">No scans yet. <a href="/chest-xray" style="color:var(--blue-600);font-weight:600;">Start your first analysis →</a></td></tr>';
+    }
+  }
+
+  // ── Grad-CAM Preview ──
+  async function loadGradCamPreview() {
+    try {
+      const latest = await fetchAPI('/api/latest-prediction');
+      if (latest && latest.heatmap_path) {
+        const gcDiv = document.getElementById('gc-effnet');
+        gcDiv.innerHTML = `
+          <span class="gc-model-label">EfficientNetB0 (100ep)</span>
+          <img src="${latest.heatmap_path}" style="width:100%;height:100%;object-fit:contain;border-radius:var(--border-radius);" alt="EfficientNetB0 Grad-CAM">
+        `;
+      }
+    } catch (e) {
+      // No scans yet — keep placeholder
+    }
+  }
+
+  // ── Init ──
+  loadAllAnalytics();
+</script>
+{% endblock %}

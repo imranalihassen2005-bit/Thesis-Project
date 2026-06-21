@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+{% set active_page = 'recommendations' %}
+
+{% block title %}TB-CAD Clinical Suite - Clinical Recommendations{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header page-header-row">
+  <div>
+    <h1>Personalized Clinical Recommendation</h1>
+    <p class="page-subtitle" id="rec-subtitle">Loading latest analysis context...</p>
+  </div>
+  <button class="btn btn-white" onclick="window.print()">⬇️ Download Report PDF</button>
+</div>
+
+<!-- Layout Grid -->
+<div class="grid-sidebar-layout-wide mb-24">
+  <!-- Main Left Column -->
+  <div class="flex flex-col gap-24">
+
+    <!-- Dynamic Alert Banner -->
+    <div class="card animate-fade-in" id="alert-banner">
+      <div class="card-header" style="margin-bottom: 16px;">
+        <h2 class="card-title" id="alert-title" style="color: var(--red-600);"><span class="card-icon" style="color: var(--red-600)">⚠️</span> Immediate Actions Required</h2>
+      </div>
+      <div class="grid-3" id="action-cards">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+
+    <!-- Follow-up Plan -->
+    <div class="card animate-fade-in animate-fade-in-delay-1">
+      <div class="card-header" style="margin-bottom: 12px;">
+        <h2 class="card-title"><span class="card-icon">🔄</span> Follow-up Plan</h2>
+      </div>
+      <div class="checklist" id="followup-checklist">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+
+    <!-- Side by Side Bottom Cards -->
+    <div class="grid-2">
+      <!-- Clinical Procedures Context -->
+      <div class="card animate-fade-in animate-fade-in-delay-2">
+        <div class="card-header" style="margin-bottom: 12px;">
+          <h2 class="card-title">Clinical Procedures Context</h2>
+        </div>
+        <div class="procedures-table" id="procedures-table">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Research Context -->
+      <div class="card research-card animate-fade-in animate-fade-in-delay-2" style="background: var(--gray-50); border: 1px solid var(--border-color);">
+        <div class="research-icon">🎓</div>
+        <h4>Research Context</h4>
+        <p id="research-text">Efficacy of CNN/Grad-CAM analysis in low-resource settings indicates significant potential for early disease detection.</p>
+        <a href="/model-insights" class="read-studies">View Model Details 📑</a>
+      </div>
+    </div>
+
+    <!-- Clinical Notes -->
+    <div class="card animate-fade-in animate-fade-in-delay-3">
+      <div class="card-header" style="margin-bottom: 12px;">
+        <h2 class="card-title"><span class="card-icon">📝</span> Clinical Notes</h2>
+      </div>
+      <textarea id="note-input" placeholder="Add clinical notes for this scan..." style="width: 100%; min-height: 80px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 12px; font-size: 13px; font-family: 'Inter', sans-serif; resize: vertical; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--blue-500)'" onblur="this.style.borderColor='var(--border-color)'"></textarea>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+        <div id="saved-notes" style="font-size: 12px; color: var(--text-muted);"></div>
+        <button class="btn btn-primary btn-sm" onclick="saveNote()">💾 Save Note</button>
+      </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer animate-fade-in-delay-3">
+      <span class="disclaimer-icon">ⓘ</span>
+      <p>
+        <strong>Clinical AI Disclaimer:</strong> This AI-generated analysis is intended as a decision-support tool and is not a replacement for professional diagnosis. All results must be confirmed by a licensed medical professional through standard clinical procedures and laboratory testing.
+      </p>
+    </div>
+  </div>
+
+  <!-- Featured Next Step Sidebar -->
+  <div class="animate-fade-in animate-fade-in-delay-1">
+    <div class="featured-card" id="featured-card">
+      <div class="featured-label">
+        <span>📅</span> Featured Next Step
+      </div>
+      <h3 id="featured-title">Loading...</h3>
+      <p id="featured-desc">Analyzing latest prediction data.</p>
+      <button class="btn-featured" onclick="window.location.href='/ai-assistant'">🤖 Ask AI Assistant</button>
+    </div>
+
+    <!-- Scan Summary Card -->
+    <div class="card" style="margin-top: 20px;" id="scan-summary-card">
+      <div class="card-header" style="margin-bottom: 12px;">
+        <h2 class="card-title"><span class="card-icon">📊</span> Scan Summary</h2>
+      </div>
+      <div id="scan-summary-content" style="font-size: 13px;">
+        <p style="color: var(--text-muted); text-align: center; padding: 16px 0;">No scan data available.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let currentScan = null;
+
+  async function loadRecommendations() {
+    try {
+      const data = await fetchAPI('/api/latest-prediction');
+      if (data && data.prediction) {
+        currentScan = data;
+        renderRecommendations(data);
+      } else {
+        renderNoScanState();
+      }
+    } catch (err) {
+      renderNoScanState();
+    }
+  }
+
+  function renderRecommendations(scan) {
+    const pred = scan.prediction;
+    const conf = scan.confidence;
+    const severity = scan.severity || (conf >= 85 ? 'High' : conf >= 70 ? 'Moderate' : 'Low');
+
+    // Subtitle
+    document.getElementById('rec-subtitle').textContent = 
+      `${pred === 'Normal' ? 'Normal' : pred + '-suspected'} trajectory based on CNN/Grad-CAM analysis — ${severity} severity.`;
+
+    // Action cards
+    const actions = getActions(pred);
+    const alertTitle = document.getElementById('alert-title');
+    if (pred === 'Normal') {
+      alertTitle.innerHTML = '<span class="card-icon" style="color:var(--green-600)">✅</span> Status: Normal';
+      alertTitle.style.color = 'var(--green-600)';
+    } else if (pred === 'Pneumonia') {
+      alertTitle.innerHTML = '<span class="card-icon" style="color:var(--orange-600)">⚠️</span> Actions Recommended';
+      alertTitle.style.color = 'var(--orange-600)';
+    }
+
+    document.getElementById('action-cards').innerHTML = actions.map(a => `
+      <div class="action-card">
+        <div class="action-icon ${a.color}">${a.icon}</div>
+        <h4>${a.title}</h4>
+        <p>${a.desc}</p>
+      </div>
+    `).join('');
+
+    // Follow-up
+    const followups = getFollowups(pred);
+    document.getElementById('followup-checklist').innerHTML = followups.map(f => `
+      <div class="checklist-item">
+        <div class="checklist-icon green">✓</div>
+        <div class="checklist-content">
+          <h4>${f.title}</h4>
+          <p>${f.desc}</p>
+        </div>
+      </div>
+    `).join('');
+
+    // Procedures
+    const procs = getProcedures(pred);
+    document.getElementById('procedures-table').innerHTML = procs.map(p => `
+      <div class="proc-row">
+        <span class="proc-name">${p.name}</span>
+        <span class="proc-status ${p.statusClass}" style="${p.bold ? 'font-weight:700;' : ''}">${p.status}</span>
+      </div>
+    `).join('');
+
+    // Research text
+    const researchTexts = {
+      'Tuberculosis': 'Efficacy of CNN/Grad-CAM analysis in low-resource settings indicates a 94% sensitivity rate for early TB detection.',
+      'Pneumonia': 'Deep learning models show promising results in differentiating bacterial vs viral pneumonia with CXR-based screening.',
+      'Normal': 'AI-assisted screening demonstrates high negative predictive value, helping rule out pulmonary pathology efficiently.'
+    };
+    document.getElementById('research-text').textContent = researchTexts[pred] || researchTexts['Normal'];
+
+    // Featured card
+    const featured = {
+      'Tuberculosis': { title: 'TB Confirmatory Testing', desc: 'High AI confidence score suggests immediate clinical validation.' },
+      'Pneumonia': { title: 'Pneumonia Workup', desc: 'Recommend chest CT and empiric antibiotic assessment.' },
+      'Normal': { title: 'Routine Follow-Up', desc: 'Normal CXR finding — standard screening protocols apply.' }
+    };
+    document.getElementById('featured-title').textContent = featured[pred].title;
+    document.getElementById('featured-desc').textContent = featured[pred].desc;
+
+    // Scan summary
+    const colors = { 'Tuberculosis': 'var(--red-600)', 'Pneumonia': 'var(--orange-600)', 'Normal': 'var(--green-600)' };
+    document.getElementById('scan-summary-content').innerHTML = `
+      <div class="cp-row"><span class="cp-label">SCAN ID</span><span class="cp-value" style="font-family:monospace;">#CXR-${String(scan.id).padStart(4,'0')}</span></div>
+      <div class="cp-row"><span class="cp-label">Finding</span><span class="cp-value"><span class="badge ${getBadgeClass(pred)}">${pred}</span></span></div>
+      <div class="cp-row"><span class="cp-label">Confidence</span><span class="cp-value" style="font-weight:700;color:${colors[pred]}">${conf.toFixed(1)}%</span></div>
+      <div class="cp-row"><span class="cp-label">Severity</span><span class="cp-value" style="font-weight:600;">${pred === 'Normal' ? '—' : severity}</span></div>
+      <div class="cp-row"><span class="cp-label">Image</span><span class="cp-value text-muted">${scan.image_name}</span></div>
+    `;
+
+    // Load existing notes
+    loadNotes(scan.id);
+  }
+
+  function renderNoScanState() {
+    document.getElementById('rec-subtitle').textContent = 'No scan data available. Please analyze a chest X-ray first.';
+    document.getElementById('action-cards').innerHTML = `
+      <div class="action-card" style="grid-column: 1/-1; text-align: center;">
+        <div class="action-icon gray">🔬</div>
+        <h4>No Analysis Available</h4>
+        <p>Go to the <a href="/chest-xray" style="color:var(--blue-600);font-weight:600;">Diagnostic Workbench</a> to analyze a chest X-ray first.</p>
+      </div>`;
+    document.getElementById('alert-title').innerHTML = '<span class="card-icon" style="color:var(--text-muted)">ℹ️</span> Awaiting Analysis';
+    document.getElementById('alert-title').style.color = 'var(--text-muted)';
+    document.getElementById('featured-title').textContent = 'Start Analysis';
+    document.getElementById('featured-desc').textContent = 'Upload a chest X-ray to receive personalized recommendations.';
+  }
+
+  function getActions(pred) {
+    if (pred === 'Tuberculosis') return [
+      { icon: '🔬', color: 'red', title: 'Confirmatory Testing', desc: 'Refer patient immediately for comprehensive lab workup.' },
+      { icon: '🧪', color: 'orange', title: 'GeneXpert Test', desc: 'Schedule rapid molecular test to detect TB DNA.' },
+      { icon: '🛡️', color: 'pink', title: 'Infection Precautions', desc: 'Initiate airborne infection isolation protocols.' }
+    ];
+    if (pred === 'Pneumonia') return [
+      { icon: '🫁', color: 'orange', title: 'Chest CT Follow-Up', desc: 'Detailed imaging for extent assessment.' },
+      { icon: '💊', color: 'blue', title: 'Antibiotic Assessment', desc: 'Empiric antibiotic therapy based on guidelines.' },
+      { icon: '📊', color: 'gray', title: 'Respiratory Monitoring', desc: 'SpO2, respiratory rate tracking.' }
+    ];
+    return [
+      { icon: '✅', color: 'green', title: 'No Immediate Action', desc: 'AI classification indicates normal lung fields.' },
+      { icon: '📅', color: 'gray', title: 'Routine Screening', desc: 'Continue standard screening schedule.' },
+      { icon: '📋', color: 'gray', title: 'Patient Discharge', desc: 'Document results and proceed with standard care.' }
+    ];
+  }
+
+  function getFollowups(pred) {
+    if (pred === 'Tuberculosis') return [
+      { title: 'Review Symptoms', desc: 'Monitor for cough, fever, and night sweats over the next 48 hours.' },
+      { title: 'Repeat CXR', desc: 'Schedule a follow-up Chest X-ray in 2 weeks for comparative analysis.' },
+      { title: 'Refer to Specialist', desc: 'Consult pulmonologist if confirmatory test is positive or symptoms worsen.' }
+    ];
+    if (pred === 'Pneumonia') return [
+      { title: 'Clinical Reassessment', desc: 'Reassess patient in 48-72 hours after starting therapy.' },
+      { title: 'Repeat CXR', desc: 'Follow-up CXR in 4-6 weeks to confirm resolution.' },
+      { title: 'Consider Atypicals', desc: 'If no response to initial therapy, consider atypical pathogens.' }
+    ];
+    return [
+      { title: 'Standard Screening', desc: 'Continue routine TB screening per institutional protocols.' },
+      { title: 'Record Results', desc: 'Document normal CXR finding in patient medical record.' },
+      { title: 'Patient Education', desc: 'Inform patient about TB symptoms to watch for.' }
+    ];
+  }
+
+  function getProcedures(pred) {
+    if (pred === 'Tuberculosis') return [
+      { name: 'CXR Review', status: 'Complete', statusClass: 'scheduled' },
+      { name: 'Sputum Test', status: 'Required', statusClass: 'required', bold: true },
+      { name: 'GeneXpert', status: 'Required', statusClass: 'required', bold: true },
+      { name: 'Consultation', status: 'Pending', statusClass: 'pending' }
+    ];
+    if (pred === 'Pneumonia') return [
+      { name: 'CXR Review', status: 'Complete', statusClass: 'scheduled' },
+      { name: 'Lab Work', status: 'Required', statusClass: 'required', bold: true },
+      { name: 'Chest CT', status: 'Recommended', statusClass: 'pending' },
+      { name: 'Follow-up', status: 'Scheduled', statusClass: 'scheduled' }
+    ];
+    return [
+      { name: 'CXR Review', status: 'Complete', statusClass: 'scheduled' },
+      { name: 'Screening', status: 'Complete', statusClass: 'scheduled' },
+      { name: 'Documentation', status: 'Pending', statusClass: 'pending' }
+    ];
+  }
+
+  async function saveNote() {
+    if (!currentScan) {
+      showToast('No scan available to add notes to.', 'error');
+      return;
+    }
+    const text = document.getElementById('note-input').value.trim();
+    if (!text) {
+      showToast('Please enter a note.', 'warning');
+      return;
+    }
+    try {
+      await fetchAPI('/api/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scan_id: currentScan.id, note_text: text })
+      });
+      document.getElementById('note-input').value = '';
+      showToast('Clinical note saved.', 'success');
+      loadNotes(currentScan.id);
+    } catch (err) {
+      showToast('Failed to save note.', 'error');
+    }
+  }
+
+  async function loadNotes(scanId) {
+    try {
+      const data = await fetchAPI(`/api/notes/${scanId}`);
+      const container = document.getElementById('saved-notes');
+      if (data.notes && data.notes.length > 0) {
+        container.innerHTML = data.notes.map(n => `
+          <div style="padding: 6px 0; border-bottom: 1px solid var(--border-color);">
+            <div style="font-weight: 500;">${n.note_text}</div>
+            <div style="color: var(--text-muted); font-size: 11px;">${formatDate(n.created_at)}</div>
+          </div>
+        `).join('');
+      } else {
+        container.textContent = 'No notes yet.';
+      }
+    } catch (err) {}
+  }
+
+  loadRecommendations();
+</script>
+{% endblock %}

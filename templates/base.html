@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}TB-CAD Clinical Suite{% endblock %}</title>
+  <meta name="description" content="AI-Based Computer-Aided Diagnosis System for Tuberculosis Detection from Chest X-Ray Images">
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">TB</div>
+        <div class="sidebar-brand-text">
+          <h1>TB-CAD Clinical Suite</h1>
+          <span>v1.0 AI Diagnostic System</span>
+        </div>
+      </div>
+      <div class="sidebar-cta">
+        <a href="/chest-xray" class="btn-start-analysis">▶ Start Analysis</a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/" class="nav-item {% if active_page == 'home' %}active{% endif %}"><span class="nav-icon">🏠</span> Home</a>
+        <a href="/chest-xray" class="nav-item {% if active_page == 'chest-xray' %}active{% endif %}"><span class="nav-icon">🔬</span> Chest X-ray Analysis</a>
+        <a href="/visual-analytics" class="nav-item {% if active_page == 'analytics' %}active{% endif %}"><span class="nav-icon">📊</span> Visual Analytics</a>
+        <a href="/ai-assistant" class="nav-item {% if active_page == 'assistant' %}active{% endif %}"><span class="nav-icon">🤖</span> AI Assistant</a>
+        <a href="/clinical-recommendations" class="nav-item {% if active_page == 'recommendations' %}active{% endif %}"><span class="nav-icon">📋</span> Clinical Recommendations</a>
+        <a href="/model-insights" class="nav-item {% if active_page == 'insights' %}active{% endif %}"><span class="nav-icon">✨</span> Model Insights</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <a href="#" class="nav-item"><span class="nav-icon">💬</span> Support</a>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="topbar-brand-label">TB-CAD AI</span>
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search patient ID, name, or scan...">
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn">🔔<span class="notification-dot"></span></button>
+          <button class="topbar-icon-btn">⚙️</button>
+          <div class="user-info">
+            <div class="user-info-text">
+              <div class="user-name">Dr. Specialist</div>
+              <div class="user-role">Clinical Lead</div>
+            </div>
+            <div class="user-avatar">DS</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" style="position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;"></div>
+
+  <script>
+    // ── Global Utilities ──
+    async function fetchAPI(url, options = {}) {
+      try {
+        const resp = await fetch(url, options);
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || 'Request failed');
+        return data;
+      } catch (err) {
+        console.error('API Error:', err);
+        showToast(err.message, 'error');
+        throw err;
+      }
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const colors = {
+        info: 'var(--blue-600)',
+        success: 'var(--green-600)',
+        error: 'var(--red-600)',
+        warning: 'var(--orange-600)'
+      };
+      toast.style.cssText = `
+        padding: 12px 20px; border-radius: 8px; color: white; font-size: 13px;
+        font-weight: 500; background: ${colors[type] || colors.info};
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: messageSlide 0.3s ease;
+        max-width: 360px; line-height: 1.4;
+      `;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      const d = new Date(dateStr);
+      const now = new Date();
+      const diff = now - d;
+      if (diff < 86400000) {
+        return 'Today ' + d.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+      } else if (diff < 172800000) {
+        return 'Yesterday ' + d.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+      }
+      return d.toLocaleDateString('en-US', {month: 'short', day: 'numeric'}) + ' ' + 
+             d.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+    }
+
+    function getBadgeClass(prediction) {
+      switch(prediction) {
+        case 'Tuberculosis': return 'badge-red';
+        case 'Pneumonia': return 'badge-orange';
+        case 'Normal': return 'badge-green';
+        default: return 'badge-gray';
+      }
+    }
+
+    function getBarColor(prediction) {
+      switch(prediction) {
+        case 'Tuberculosis': return 'var(--red-500)';
+        case 'Pneumonia': return 'var(--orange-500)';
+        case 'Normal': return 'var(--green-500)';
+        default: return 'var(--blue-500)';
+      }
+    }
+  </script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TB-CAD Clinical Suite - AI Assistant</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">TB</div>
+        <div class="sidebar-brand-text">
+          <h1>TB-CAD Clinical Suite</h1>
+          <span>v1.0 AI Diagnostic System</span>
+        </div>
+      </div>
+      <div class="sidebar-cta">
+        <a href="chest-xray.html" class="btn-start-analysis">▶ Start Analysis</a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+        <a href="chest-xray.html" class="nav-item"><span class="nav-icon">🔬</span> Chest X-ray Analysis</a>
+        <a href="visual-analytics.html" class="nav-item"><span class="nav-icon">📊</span> Visual Analytics</a>
+        <a href="ai-assistant.html" class="nav-item active"><span class="nav-icon">🤖</span> AI Assistant</a>
+        <a href="clinical-recommendations.html" class="nav-item"><span class="nav-icon">📋</span> Clinical Recommendations</a>
+        <a href="model-insights.html" class="nav-item"><span class="nav-icon">✨</span> Model Insights</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <a href="#" class="nav-item"><span class="nav-icon">💬</span> Support</a>
+        <a href="#" class="nav-item"><span class="nav-icon">🚪</span> Sign Out</a>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="topbar-brand-label">TB-CAD AI</span>
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search patient ID, name, or scan...">
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn">🔔<span class="notification-dot"></span></button>
+          <button class="topbar-icon-btn">⚙️</button>
+          <div class="user-info">
+            <div class="user-info-text">
+              <div class="user-name">Dr. Specialist</div>
+              <div class="user-role">Clinical Lead</div>
+            </div>
+            <div class="user-avatar">DS</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Workbench Layout (Grid) -->
+        <div class="grid-sidebar-layout-wide">
+          <!-- Main Chat Container -->
+          <div class="chat-container animate-fade-in">
+            <!-- Chat Header -->
+            <div class="chat-header">
+              <div class="chat-header-left">
+                <div class="chat-avatar">🤖</div>
+                <div class="chat-header-info">
+                  <h3>TB Diagnostic Assistant</h3>
+                  <div class="status"><span class="status-dot green"></span> Active Session</div>
+                </div>
+              </div>
+              <div class="flex gap-8">
+                <button class="topbar-icon-btn" title="Download Transcript">⬇️</button>
+                <button class="topbar-icon-btn" title="Options">⋮</button>
+              </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="chat-messages">
+              <!-- Message 1: Bot -->
+              <div class="chat-message bot">
+                <div class="message-avatar">🤖</div>
+                <div class="flex flex-col">
+                  <span class="message-sender">Diagnostic Assistant</span>
+                  <div class="message-bubble">
+                    <p style="font-weight: 600; margin-bottom: 8px;">Analyzing Patient #8829...</p>
+                    <div class="flex items-center gap-8 mb-12">
+                      <span class="badge badge-green">94% Confidence</span>
+                      <span style="font-size: 12px; color: var(--text-secondary);">for suspicious pulmonary opacity patterns.</span>
+                    </div>
+                    <div class="flex items-center gap-12" style="background: white; border: 1px solid var(--border-color); border-radius: var(--border-radius-xs); padding: 8px 12px;">
+                      <span style="font-size: 13px; font-weight: 700; color: var(--red-600);"><span class="status-dot red"></span> TB-Positive</span>
+                      <span style="font-size: 12px; color: var(--orange-600); font-weight: 600;">● Moderate Risk</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Message 2: User -->
+              <div class="chat-message user">
+                <div class="message-avatar">DS</div>
+                <div class="flex flex-col">
+                  <span class="message-sender text-right">You</span>
+                  <div class="message-bubble">
+                    What does the Grad-CAM heatmap indicate for the upper lung region?
+                  </div>
+                </div>
+              </div>
+
+              <!-- Message 3: Bot -->
+              <div class="chat-message bot">
+                <div class="message-avatar">🤖</div>
+                <div class="flex flex-col">
+                  <span class="message-sender">Diagnostic Assistant</span>
+                  <div class="message-bubble" style="max-width: 520px;">
+                    <p style="margin-bottom: 12px;">The Grad-CAM heatmap indicates increased model attention in the <strong>right upper lung zone</strong>. This is an important feature for the TB-positive prediction.</p>
+                    
+                    <!-- Nested Heatmap Content Info -->
+                    <div class="flex gap-16" style="margin-top: 12px; align-items: start;">
+                      <!-- Heatmap Gradient Thumbnail -->
+                      <div class="heatmap-image" style="width: 120px; height: 100px; border-radius: var(--border-radius-xs); flex-shrink: 0;"></div>
+                      
+                      <div class="flex flex-col gap-8">
+                        <div class="flex gap-8 items-center" style="font-size: 12px;">
+                          <span style="color: var(--green-600);">✓</span>
+                          <span>High activation correlating with typical apical infiltration patterns.</span>
+                        </div>
+                        <div class="flex gap-8 items-center" style="font-size: 12px;">
+                          <span style="color: var(--blue-600);">ⓘ</span>
+                          <span>The AI assigns a high weight (0.85) to this specific region's texture.</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Suggestions -->
+            <div class="chat-suggestions">
+              <button class="suggestion-chip">"What does this scan mean?"</button>
+              <button class="suggestion-chip">"Explain Grad-CAM result"</button>
+              <button class="suggestion-chip">"Draft Patient Report"</button>
+            </div>
+
+            <!-- Input Bar -->
+            <div class="chat-input">
+              <button class="btn-attach" title="Attach Logs">📎</button>
+              <input type="text" placeholder="Type a message or ask about Patient #8829...">
+              <button class="btn-send">➤</button>
+            </div>
+          </div>
+
+          <!-- Right Sidebar Content -->
+          <div class="flex flex-col gap-24">
+            <!-- Context Summary -->
+            <div class="card context-panel animate-fade-in animate-fade-in-delay-1">
+              <div class="card-header" style="margin-bottom: 12px;">
+                <h2 class="card-title"><span class="card-icon">📄</span> Context Summary</h2>
+              </div>
+              <div class="cp-row">
+                <span class="cp-label">PATIENT ID</span>
+                <span class="cp-value" style="background: var(--gray-100); padding: 2px 8px; border-radius: var(--border-radius-xs); font-family: monospace;">#8829</span>
+              </div>
+              <div class="cp-row">
+                <span class="cp-label">Demographics</span>
+                <span class="cp-value">Male, 34 yrs</span>
+              </div>
+              <div class="cp-row" style="margin-bottom: 8px;">
+                <span class="cp-label">Health Score</span>
+                <span class="cp-value" style="display: flex; align-items: center; gap: 6px;">78% <span style="color: var(--green-600); font-size: 11px;">↗ 12%</span></span>
+              </div>
+              <div class="progress-bar mb-8">
+                <div class="progress-fill green" style="width: 78%;"></div>
+              </div>
+            </div>
+
+            <!-- Knowledge Base Recommendations -->
+            <div class="card animate-fade-in animate-fade-in-delay-2">
+              <div class="card-header" style="margin-bottom: 12px;">
+                <h2 class="card-title"><span class="card-icon">📚</span> Knowledge Base</h2>
+              </div>
+              
+              <!-- Detected features -->
+              <div class="kb-section">
+                <h4>TB INDICATORS DETECTED</h4>
+                <div class="kb-tags">
+                  <span class="tag">Infiltration</span>
+                  <span class="tag tag-red">Cavitation</span>
+                  <span class="tag">Nodules</span>
+                </div>
+              </div>
+
+              <!-- Recommendation links -->
+              <div class="kb-section" style="margin-bottom: 0;">
+                <h4>RECOMMENDATIONS</h4>
+                <div class="kb-recommendation">
+                  <span class="kb-rec-icon">🔬</span>
+                  <span>Initiate Sputum Smear Microscopy</span>
+                </div>
+                <div class="kb-recommendation">
+                  <span class="kb-rec-icon">📅</span>
+                  <span>Schedule follow-up HRCT</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Drag & Drop Notes -->
+            <div class="card animate-fade-in animate-fade-in-delay-3" style="padding: 16px;">
+              <div class="dropzone" style="padding: 20px; border-style: dashed; border-width: 1.5px;">
+                <div class="dropzone-icon" style="font-size: 24px;">☁️</div>
+                <div class="dropzone-text" style="font-size: 12px; font-weight: 700; margin-bottom: 4px;">Add Clinical Notes</div>
+                <div class="dropzone-hint" style="font-size: 10px;">Drag & drop files or click to browse logs</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+{% set active_page = 'assistant' %}
+
+{% block title %}TB-CAD Clinical Suite - AI Assistant{% endblock %}
+
+{% block head %}
+<style>
+  .chat-typing-indicator { display: flex; gap: 4px; padding: 4px 0; }
+  .chat-typing-indicator span { width: 6px; height: 6px; background: var(--text-muted); border-radius: 50%; animation: typingBounce 1.2s ease-in-out infinite; }
+  .chat-typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .chat-typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+  .msg-markdown p { margin-bottom: 8px; }
+  .msg-markdown strong { font-weight: 700; }
+  .msg-markdown ul, .msg-markdown ol { margin: 6px 0; padding-left: 20px; }
+  .msg-markdown li { margin-bottom: 4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Workbench Layout -->
+<div class="grid-sidebar-layout-wide">
+  <!-- Main Chat Container -->
+  <div class="chat-container animate-fade-in">
+    <!-- Chat Header -->
+    <div class="chat-header">
+      <div class="chat-header-left">
+        <div class="chat-avatar">🤖</div>
+        <div class="chat-header-info">
+          <h3>TB Diagnostic Assistant</h3>
+          <div class="status"><span class="status-dot green"></span> Active Session</div>
+        </div>
+      </div>
+      <div class="flex gap-8">
+        <button class="topbar-icon-btn" title="Clear Chat" onclick="clearChat()">🗑️</button>
+      </div>
+    </div>
+
+    <!-- Chat Messages -->
+    <div class="chat-messages" id="chat-messages">
+      <!-- Welcome message -->
+      <div class="chat-message bot">
+        <div class="message-avatar">🤖</div>
+        <div class="flex flex-col">
+          <span class="message-sender">Diagnostic Assistant</span>
+          <div class="message-bubble">
+            <p style="font-weight: 600; margin-bottom: 8px;">Welcome to TB Diagnostic Assistant</p>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">I can help you interpret chest X-ray analysis results, explain Grad-CAM heatmaps, draft clinical reports, and provide evidence-based recommendations.</p>
+            <div id="context-badge" style="display:none;">
+              <div class="flex items-center gap-12" style="background: white; border: 1px solid var(--border-color); border-radius: var(--border-radius-xs); padding: 8px 12px;">
+                <span id="context-prediction" style="font-size: 13px; font-weight: 700;"></span>
+                <span id="context-confidence" style="font-size: 12px; font-weight: 600;"></span>
+              </div>
+            </div>
+            <p id="no-context-msg" style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">💡 Upload a chest X-ray on the <a href="/chest-xray" style="color:var(--blue-600);font-weight:600;">Analysis page</a> first for contextual responses.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Suggestions -->
+    <div class="chat-suggestions" id="chat-suggestions">
+      <button class="suggestion-chip" onclick="sendSuggestion(this)">What does this scan mean?</button>
+      <button class="suggestion-chip" onclick="sendSuggestion(this)">Explain Grad-CAM result</button>
+      <button class="suggestion-chip" onclick="sendSuggestion(this)">What should be done next?</button>
+      <button class="suggestion-chip" onclick="sendSuggestion(this)">Draft Patient Report</button>
+      <button class="suggestion-chip" onclick="sendSuggestion(this)">What is the confidence score?</button>
+      <button class="suggestion-chip" onclick="sendSuggestion(this)">Tell me about the model</button>
+    </div>
+
+    <!-- Input Bar -->
+    <div class="chat-input">
+      <input type="text" id="chat-input-field" placeholder="Type a question about the analysis..." onkeydown="if(event.key==='Enter')sendMessage()">
+      <button class="btn-send" id="btn-send" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+
+  <!-- Right Sidebar Content -->
+  <div class="flex flex-col gap-24">
+    <!-- Context Summary -->
+    <div class="card context-panel animate-fade-in animate-fade-in-delay-1">
+      <div class="card-header" style="margin-bottom: 12px;">
+        <h2 class="card-title"><span class="card-icon">📄</span> Scan Context</h2>
+      </div>
+      <div id="context-panel-content">
+        <p style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 16px 0;">No scan analyzed yet.<br><a href="/chest-xray" style="color:var(--blue-600);font-weight:600;">Analyze a scan →</a></p>
+      </div>
+    </div>
+
+    <!-- Chat History -->
+    <div class="card animate-fade-in animate-fade-in-delay-2">
+      <div class="card-header" style="margin-bottom: 12px;">
+        <h2 class="card-title"><span class="card-icon">📚</span> Chat History</h2>
+      </div>
+      <div id="chat-history-list" style="max-height: 200px; overflow-y: auto;">
+        <p style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 12px 0;">No previous chats.</p>
+      </div>
+    </div>
+
+    <!-- Quick Tips -->
+    <div class="card animate-fade-in animate-fade-in-delay-3" style="padding: 16px;">
+      <h3 style="font-size: 13px; font-weight: 700; margin-bottom: 10px;">💡 Try Asking</h3>
+      <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--text-secondary);">
+        <div>• "Why was TB predicted?"</div>
+        <div>• "Draft patient report"</div>
+        <div>• "What are the next steps?"</div>
+        <div>• "How confident is the model?"</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let currentScanId = null;
+
+  // Load latest prediction context
+  async function loadContext() {
+    try {
+      const data = await fetchAPI('/api/latest-prediction');
+      if (data && data.prediction) {
+        currentScanId = data.id;
+
+        // Update welcome badge
+        const badge = document.getElementById('context-badge');
+        badge.style.display = '';
+        document.getElementById('no-context-msg').style.display = 'none';
+
+        const predEl = document.getElementById('context-prediction');
+        const colors = { 'Tuberculosis': 'var(--red-600)', 'Pneumonia': 'var(--orange-600)', 'Normal': 'var(--green-600)' };
+        const dots = { 'Tuberculosis': 'red', 'Pneumonia': 'orange', 'Normal': 'green' };
+        predEl.innerHTML = `<span class="status-dot ${dots[data.prediction]}"></span> ${data.prediction}`;
+        predEl.style.color = colors[data.prediction];
+
+        const confEl = document.getElementById('context-confidence');
+        confEl.textContent = `● ${data.confidence.toFixed(1)}% confidence`;
+        confEl.style.color = 'var(--text-secondary)';
+
+        // Context panel
+        const panel = document.getElementById('context-panel-content');
+        panel.innerHTML = `
+          <div class="cp-row">
+            <span class="cp-label">SCAN ID</span>
+            <span class="cp-value" style="background:var(--gray-100);padding:2px 8px;border-radius:var(--border-radius-xs);font-family:monospace;">#CXR-${String(data.id).padStart(4, '0')}</span>
+          </div>
+          <div class="cp-row">
+            <span class="cp-label">AI Finding</span>
+            <span class="cp-value"><span class="badge ${getBadgeClass(data.prediction)}">${data.prediction}</span></span>
+          </div>
+          <div class="cp-row">
+            <span class="cp-label">Confidence</span>
+            <span class="cp-value" style="font-weight:700;color:${colors[data.prediction]}">${data.confidence.toFixed(1)}%</span>
+          </div>
+          <div class="cp-row">
+            <span class="cp-label">Severity</span>
+            <span class="cp-value" style="font-weight:600;">${data.severity || '—'}</span>
+          </div>
+          <div class="cp-row">
+            <span class="cp-label">Image</span>
+            <span class="cp-value text-muted">${data.image_name}</span>
+          </div>
+        `;
+      }
+    } catch (err) {
+      // No scans yet — that's fine
+    }
+  }
+
+  // Load chat history
+  async function loadChatHistory() {
+    try {
+      const data = await fetchAPI('/api/chats?limit=10');
+      if (data.chats && data.chats.length > 0) {
+        const list = document.getElementById('chat-history-list');
+        list.innerHTML = data.chats.map(c => `
+          <div style="padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 12px;">
+            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">Q: ${c.question.substring(0, 60)}${c.question.length > 60 ? '...' : ''}</div>
+            <div style="color: var(--text-muted);">${formatDate(c.created_at)}</div>
+          </div>
+        `).join('');
+      }
+    } catch (err) {}
+  }
+
+  function sendSuggestion(btn) {
+    document.getElementById('chat-input-field').value = btn.textContent;
+    sendMessage();
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('chat-input-field');
+    const question = input.value.trim();
+    if (!question) return;
+
+    input.value = '';
+    input.disabled = true;
+    document.getElementById('btn-send').disabled = true;
+
+    // Add user message
+    appendMessage('user', question);
+
+    // Show typing indicator
+    const typingId = showTypingIndicator();
+
+    try {
+      const body = { question };
+      if (currentScanId) body.scan_id = currentScanId;
+
+      const resp = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await resp.json();
+
+      removeTypingIndicator(typingId);
+
+      if (!resp.ok) throw new Error(data.error || 'Chat failed');
+
+      appendMessage('bot', data.response);
+
+    } catch (err) {
+      removeTypingIndicator(typingId);
+      appendMessage('bot', `⚠️ Error: ${err.message}`);
+    }
+
+    input.disabled = false;
+    document.getElementById('btn-send').disabled = false;
+    input.focus();
+  }
+
+  function appendMessage(role, text) {
+    const container = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = `chat-message ${role}`;
+
+    const formatted = formatMarkdown(text);
+
+    if (role === 'bot') {
+      div.innerHTML = `
+        <div class="message-avatar">🤖</div>
+        <div class="flex flex-col">
+          <span class="message-sender">Diagnostic Assistant</span>
+          <div class="message-bubble msg-markdown">${formatted}</div>
+        </div>`;
+    } else {
+      div.innerHTML = `
+        <div class="message-avatar">DS</div>
+        <div class="flex flex-col">
+          <span class="message-sender text-right">You</span>
+          <div class="message-bubble">${escapeHtml(text)}</div>
+        </div>`;
+    }
+
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function showTypingIndicator() {
+    const container = document.getElementById('chat-messages');
+    const id = 'typing-' + Date.now();
+    const div = document.createElement('div');
+    div.className = 'chat-message bot';
+    div.id = id;
+    div.innerHTML = `
+      <div class="message-avatar">🤖</div>
+      <div class="flex flex-col">
+        <span class="message-sender">Diagnostic Assistant</span>
+        <div class="message-bubble">
+          <div class="chat-typing-indicator"><span></span><span></span><span></span></div>
+        </div>
+      </div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    return id;
+  }
+
+  function removeTypingIndicator(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  }
+
+  function formatMarkdown(text) {
+    // Basic markdown → HTML
+    let html = escapeHtml(text);
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    html = html.replace(/^• (.+)/gm, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+    html = html.replace(/---/g, '<hr style="border:none;border-top:1px solid var(--border-color);margin:8px 0;">');
+    html = html.replace(/\n\n/g, '</p><p>');
+    html = html.replace(/\n/g, '<br>');
+    html = '<p>' + html + '</p>';
+    return html;
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function clearChat() {
+    const container = document.getElementById('chat-messages');
+    // Keep only the first welcome message
+    while (container.children.length > 1) {
+      container.removeChild(container.lastChild);
+    }
+  }
+
+  loadContext();
+  loadChatHistory();
+</script>
+{% endblock %}

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TB-CAD Clinical Suite - Visual Analytics</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .full-width {
+      grid-column: 1 / -1;
+    }
+    .chart-box {
+      min-height: 280px;
+    }
+    @media (max-width: 1024px) {
+      .analytics-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">TB</div>
+        <div class="sidebar-brand-text">
+          <h1>TB-CAD Clinical Suite</h1>
+          <span>v1.0 AI Diagnostic System</span>
+        </div>
+      </div>
+      <div class="sidebar-cta">
+        <a href="chest-xray.html" class="btn-start-analysis">▶ Start Analysis</a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+        <a href="chest-xray.html" class="nav-item"><span class="nav-icon">🔬</span> Chest X-ray Analysis</a>
+        <a href="visual-analytics.html" class="nav-item active"><span class="nav-icon">📊</span> Visual Analytics</a>
+        <a href="ai-assistant.html" class="nav-item"><span class="nav-icon">🤖</span> AI Assistant</a>
+        <a href="clinical-recommendations.html" class="nav-item"><span class="nav-icon">📋</span> Clinical Recommendations</a>
+        <a href="model-insights.html" class="nav-item"><span class="nav-icon">✨</span> Model Insights</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <a href="#" class="nav-item"><span class="nav-icon">💬</span> Support</a>
+        <a href="#" class="nav-item"><span class="nav-icon">🚪</span> Sign Out</a>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="topbar-brand-label">TB-CAD AI</span>
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search patient ID, name, or scan...">
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn">🔔<span class="notification-dot"></span></button>
+          <button class="topbar-icon-btn">⚙️</button>
+          <div class="user-info">
+            <div class="user-info-text">
+              <div class="user-name">Dr. Specialist</div>
+              <div class="user-role">Clinical Lead</div>
+            </div>
+            <div class="user-avatar">DS</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Page Header -->
+        <div class="page-header page-header-row">
+          <div>
+            <h1>Visual Analytics Dashboard</h1>
+            <p class="page-subtitle">Comprehensive AI-driven analysis metrics, detection trends, and model performance insights.</p>
+          </div>
+          <div class="flex gap-12 items-center">
+            <div class="flex gap-8" style="background: white; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 4px 12px; align-items: center;">
+              <span class="text-xs text-muted font-semibold">RANGE:</span>
+              <input type="date" value="2026-01-01" style="font-size: 12px; border:none; background:transparent; outline:none;">
+              <span class="text-xs text-muted">to</span>
+              <input type="date" value="2026-05-22" style="font-size: 12px; border:none; background:transparent; outline:none;">
+            </div>
+            <button class="btn btn-primary btn-sm">Export Report ⬇️</button>
+          </div>
+        </div>
+
+        <!-- Metrics Cards Row -->
+        <div class="metric-row mb-24 flex gap-16 w-full">
+          <div class="mini-stat">
+            <div class="ms-value">5,137</div>
+            <div class="ms-label">Total Scans</div>
+            <div class="ms-change positive">↗ +8.3%</div>
+          </div>
+          <div class="mini-stat">
+            <div class="ms-value" style="color: var(--red-500);">24.2%</div>
+            <div class="ms-label">TB-Positive Rate</div>
+            <div class="ms-change negative">↑ +2.1%</div>
+          </div>
+          <div class="mini-stat">
+            <div class="ms-value" style="color: var(--blue-600);">91.7%</div>
+            <div class="ms-label">Avg Confidence</div>
+            <div class="ms-change text-muted">Stable</div>
+          </div>
+          <div class="mini-stat">
+            <div class="ms-value" style="color: var(--green-600);">1.8%</div>
+            <div class="ms-label">False Positive Rate</div>
+            <div class="ms-change positive">↓ -0.3%</div>
+          </div>
+          <div class="mini-stat">
+            <div class="ms-value">47</div>
+            <div class="ms-label">Scans Today</div>
+            <div class="ms-change positive">↗ +4 scans</div>
+          </div>
+        </div>
+
+        <!-- Analytics Grid -->
+        <div class="analytics-grid mb-24">
+          <!-- Detection Trends Over Time -->
+          <div class="card full-width animate-fade-in">
+            <div class="card-header">
+              <h2 class="card-title"><span class="card-icon">📈</span> TB Detection Trends Over Time</h2>
+            </div>
+            <div class="chart-container chart-box">
+              <canvas id="trendsChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Confidence Score Distribution -->
+          <div class="card animate-fade-in animate-fade-in-delay-1">
+            <div class="card-header">
+              <h2 class="card-title"><span class="card-icon">📊</span> Confidence Score Distribution</h2>
+            </div>
+            <div class="chart-container chart-box">
+              <canvas id="confidenceDistChart"></canvas>
+            </div>
+          </div>
+
+          <!-- ROC Curve -->
+          <div class="card animate-fade-in animate-fade-in-delay-1">
+            <div class="card-header">
+              <h2 class="card-title"><span class="card-icon">🎯</span> ROC Curve - Model Performance</h2>
+            </div>
+            <div class="chart-container chart-box" style="position: relative;">
+              <canvas id="rocChart"></canvas>
+              <div style="position: absolute; top: 20px; right: 30px; background: rgba(255,255,255,0.9); border: 1px solid var(--border-color); border-radius: var(--border-radius-xs); padding: 4px 10px; font-size: 11px; font-weight: 700;">
+                AUC = 0.987
+              </div>
+            </div>
+          </div>
+
+          <!-- Confusion Matrix -->
+          <div class="card animate-fade-in animate-fade-in-delay-2">
+            <div class="card-header">
+              <h2 class="card-title"><span class="card-icon">🔲</span> Confusion Matrix</h2>
+            </div>
+            <div style="padding: 16px 0;">
+              <div class="confusion-matrix">
+                <!-- Row 1: Headers -->
+                <div></div>
+                <div class="cm-header">PRED POSITIVE</div>
+                <div class="cm-header">PRED NEGATIVE</div>
+                
+                <!-- Row 2: Actual Pos -->
+                <div class="cm-header" style="writing-mode: vertical-lr; transform: rotate(180deg); padding: 0;">ACTUAL POS</div>
+                <div class="cm-cell tp">
+                  1,221
+                  <span class="cm-label">True Pos (TP)</span>
+                </div>
+                <div class="cm-cell fn">
+                  33
+                  <span class="cm-label">False Neg (FN)</span>
+                </div>
+
+                <!-- Row 3: Actual Neg -->
+                <div class="cm-header" style="writing-mode: vertical-lr; transform: rotate(180deg); padding: 0;">ACTUAL NEG</div>
+                <div class="cm-cell fp">
+                  24
+                  <span class="cm-label">False Pos (FP)</span>
+                </div>
+                <div class="cm-cell tn">
+                  3,859
+                  <span class="cm-label">True Neg (TN)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Feature Correlation Heatmap -->
+          <div class="card animate-fade-in animate-fade-in-delay-2">
+            <div class="card-header">
+              <h2 class="card-title"><span class="card-icon">🔥</span> Feature Correlation Heatmap</h2>
+            </div>
+            <div style="padding: 12px 0;">
+              <div class="heatmap-grid" style="grid-template-columns: 90px 1fr 1fr 1fr 1fr; align-items: center; gap: 4px;">
+                <!-- Column labels -->
+                <div></div>
+                <div class="text-xs font-semibold text-muted text-center">Infiltration</div>
+                <div class="text-xs font-semibold text-muted text-center">Cavitation</div>
+                <div class="text-xs font-semibold text-muted text-center">Nodules</div>
+                <div class="text-xs font-semibold text-muted text-center">Consolid.</div>
+
+                <!-- Row 1 -->
+                <div class="text-xs font-semibold text-muted text-right pr-8">Infiltration</div>
+                <div class="heatmap-cell" style="background: rgba(37, 99, 235, 0.95)">1.00</div>
+                <div class="heatmap-cell" style="background: rgba(37, 99, 235, 0.70)">0.68</div>
+                <div class="heatmap-cell" style="background: rgba(37, 99, 235, 0.50)">0.45</div>
+                <div class="heatmap-cell" style="background: rgba(37, 99, 235, 0.75)">0.72</div>
+
+                <!-- Row 2 -->
+                <div class="text-xs font-semibold text-muted text-right pr-8">Cavitation</div>
+                <div class="heatmap-cell" style="background: rgba(37, 99, 235, 0.70)">0.68</div>
+                <div class="heatmap-cell" style="background: rgba(37, 99, 235, 0.95)">1.00</div>
+                <div class="heatmap-cell" style="background: rgba(37, 99, 235, 0.35)">0.31</div>
+                <div class="heatmap-cell" style="background: rgba(37, 99, 235, 0.55)">0.50</div>
+
+                <!-- Row 3 -->
+                <div class="text-xs font-semibold text-muted text-right pr-8">Nodules</div>
+                <div class="heatmap-cell" style="background: rgba(37, 99, 235, 0.50)">0.45</div>
+                <div class="heatmap-cell" style="background: rgba(37, 99, 235, 0.35)">0.31</div>
+                <div class="heatmap-cell" style="background: rgba(37, 99, 235, 0.95)">1.00</div>
+                <div class="heatmap-cell" style="background: rgba(37, 99, 235, 0.40)">0.38</div>
+
+                <!-- Row 4 -->
+                <div class="text-xs font-semibold text-muted text-right pr-8">Consolid.</div>
+                <div class="heatmap-cell" style="background: rgba(37, 99, 235, 0.75)">0.72</div>
+                <div class="heatmap-cell" style="background: rgba(37, 99, 235, 0.55)">0.50</div>
+                <div class="heatmap-cell" style="background: rgba(37, 99, 235, 0.40)">0.38</div>
+                <div class="heatmap-cell" style="background: rgba(37, 99, 235, 0.95)">1.00</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Demographics Distribution -->
+          <div class="card animate-fade-in animate-fade-in-delay-3">
+            <div class="card-header">
+              <h2 class="card-title"><span class="card-icon">👥</span> Patient Demographics</h2>
+            </div>
+            <div class="chart-container" style="min-height: 280px; display: flex; flex-direction: column; gap: 16px;">
+              <div style="flex: 1; min-height: 140px;">
+                <canvas id="genderChart"></canvas>
+              </div>
+              <div style="flex: 1; min-height: 100px;">
+                <canvas id="ageChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lung Zone Activation -->
+          <div class="card animate-fade-in animate-fade-in-delay-3">
+            <div class="card-header">
+              <h2 class="card-title"><span class="card-icon">🫁</span> Lung Zone Activation Frequency</h2>
+            </div>
+            <div style="padding: 16px 0;">
+              <div class="lung-zones">
+                <div class="lung-zone" style="background: rgba(239, 68, 68, 0.25); border-color: rgba(239, 68, 68, 0.4);">
+                  <div class="zone-name">Right Upper</div>
+                  <div class="zone-value" style="color: var(--red-600)">78%</div>
+                </div>
+                <div class="lung-zone" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3);">
+                  <div class="zone-name">Left Upper</div>
+                  <div class="zone-value" style="color: var(--red-600)">65%</div>
+                </div>
+                <div class="lung-zone" style="background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.3);">
+                  <div class="zone-name">Right Middle</div>
+                  <div class="zone-value" style="color: var(--blue-600)">42%</div>
+                </div>
+                <div class="lung-zone" style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.25);">
+                  <div class="zone-name">Left Middle</div>
+                  <div class="zone-value" style="color: var(--blue-600)">38%</div>
+                </div>
+                <div class="lung-zone" style="background: rgba(59, 130, 246, 0.05); border-color: var(--border-color);">
+                  <div class="zone-name">Right Lower</div>
+                  <div class="zone-value" style="color: var(--text-secondary)">25%</div>
+                </div>
+                <div class="lung-zone" style="background: rgba(59, 130, 246, 0.05); border-color: var(--border-color);">
+                  <div class="zone-name">Left Lower</div>
+                  <div class="zone-value" style="color: var(--text-secondary)">22%</div>
+                </div>
+              </div>
+              <p class="text-xs text-muted text-center mt-12">Frequencies correspond to Grad-CAM heatmap activation intensities across clinical dataset validation.</p>
+            </div>
+          </div>
+
+          <!-- Model Confidence Over Time -->
+          <div class="card full-width animate-fade-in animate-fade-in-delay-4">
+            <div class="card-header">
+              <h2 class="card-title"><span class="card-icon">📈</span> Model Confidence Stability (30 Days)</h2>
+            </div>
+            <div class="chart-container chart-box">
+              <canvas id="confidenceStabilityChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Chart.js Setup Scripts -->
+  <script>
+    // Set custom defaults
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.font.size = 11;
+    Chart.defaults.color = '#64748b';
+
+    // 1. Detection Trends Chart
+    const trendsCtx = document.getElementById('trendsChart').getContext('2d');
+    new Chart(trendsCtx, {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        datasets: [{
+          label: 'TB-Positive',
+          data: [25, 23, 26, 21, 24, 28, 22, 25, 27, 24, 23, 24],
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.08)',
+          fill: true,
+          tension: 0.4
+        }, {
+          label: 'Normal',
+          data: [75, 77, 74, 79, 76, 72, 78, 75, 73, 76, 77, 76],
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.04)',
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top', align: 'end' }
+        },
+        scales: {
+          y: { grid: { color: '#f1f5f9' }, title: { display: true, text: 'Percentage (%)' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+    // 2. Confidence Score Distribution Chart
+    const confCtx = document.getElementById('confidenceDistChart').getContext('2d');
+    new Chart(confCtx, {
+      type: 'bar',
+      data: {
+        labels: ['50-60%', '60-70%', '70-80%', '80-90%', '90-100%'],
+        datasets: [{
+          label: 'Scans Detected',
+          data: [120, 280, 640, 1420, 2677],
+          backgroundColor: ['#f59e0b', '#eab308', '#3b82f6', '#10b981', '#15803d'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { grid: { color: '#f1f5f9' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+    // 3. ROC Curve Chart
+    const rocCtx = document.getElementById('rocChart').getContext('2d');
+    new Chart(rocCtx, {
+      type: 'line',
+      data: {
+        datasets: [{
+          label: 'EfficientNetB0',
+          data: [
+            {x: 0, y: 0}, {x: 0.01, y: 0.85}, {x: 0.02, y: 0.94}, {x: 0.05, y: 0.97}, 
+            {x: 0.1, y: 0.985}, {x: 0.2, y: 0.99}, {x: 0.5, y: 0.998}, {x: 1, y: 1}
+          ],
+          borderColor: '#2563eb',
+          backgroundColor: 'transparent',
+          borderWidth: 2.5,
+          tension: 0.25
+        }, {
+          label: 'Random Guess',
+          data: [{x: 0, y: 0}, {x: 1, y: 1}],
+          borderColor: '#cbd5e1',
+          borderDash: [5, 5],
+          backgroundColor: 'transparent',
+          borderWidth: 1.5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          x: { type: 'linear', min: 0, max: 1, title: { display: true, text: 'False Positive Rate' }, grid: { color: '#f1f5f9' } },
+          y: { min: 0, max: 1, title: { display: true, text: 'True Positive Rate' }, grid: { color: '#f1f5f9' } }
+        }
+      }
+    });
+
+    // 4. Gender Chart
+    const genderCtx = document.getElementById('genderChart').getContext('2d');
+    new Chart(genderCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Male', 'Female'],
+        datasets: [{
+          data: [2980, 2157],
+          backgroundColor: ['#2563eb', '#db2777'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right' }
+        }
+      }
+    });
+
+    // 5. Age Chart
+    const ageCtx = document.getElementById('ageChart').getContext('2d');
+    new Chart(ageCtx, {
+      type: 'bar',
+      indexAxis: 'y',
+      data: {
+        labels: ['0-18', '19-35', '36-50', '51-65', '65+'],
+        datasets: [{
+          data: [8, 32, 28, 22, 10],
+          backgroundColor: '#64748b',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { max: 40, title: { display: true, text: 'Percentage (%)' }, grid: { display: false } },
+          y: { grid: { display: false } }
+        }
+      }
+    });
+
+    // 6. Confidence Stability Chart
+    const stabilityCtx = document.getElementById('confidenceStabilityChart').getContext('2d');
+    new Chart(stabilityCtx, {
+      type: 'line',
+      data: {
+        labels: Array.from({length: 30}, (_, i) => `Day ${i+1}`),
+        datasets: [{
+          label: 'Average Confidence',
+          data: [91.2, 92.1, 91.8, 90.9, 92.4, 91.5, 92.2, 93.0, 91.6, 91.9, 92.5, 92.1, 90.8, 91.4, 92.3, 91.8, 92.7, 93.1, 92.0, 91.3, 92.2, 91.6, 90.9, 91.8, 92.4, 91.7, 92.0, 92.8, 91.5, 92.1],
+          borderColor: '#2563eb',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          tension: 0.35
+        }, {
+          label: 'Critical Threshold (90%)',
+          data: Array(30).fill(90.0),
+          borderColor: '#ef4444',
+          borderDash: [4, 4],
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          pointStyle: 'none',
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', align: 'end' } },
+        scales: {
+          y: { min: 85, max: 100, title: { display: true, text: 'Confidence (%)' }, grid: { color: '#f1f5f9' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

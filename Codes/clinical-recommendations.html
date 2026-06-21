@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TB-CAD Clinical Suite - Clinical Recommendations</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">TB</div>
+        <div class="sidebar-brand-text">
+          <h1>TB-CAD Clinical Suite</h1>
+          <span>v1.0 AI Diagnostic System</span>
+        </div>
+      </div>
+      <div class="sidebar-cta">
+        <a href="chest-xray.html" class="btn-start-analysis">▶ Start Analysis</a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+        <a href="chest-xray.html" class="nav-item"><span class="nav-icon">🔬</span> Chest X-ray Analysis</a>
+        <a href="visual-analytics.html" class="nav-item"><span class="nav-icon">📊</span> Visual Analytics</a>
+        <a href="ai-assistant.html" class="nav-item"><span class="nav-icon">🤖</span> AI Assistant</a>
+        <a href="clinical-recommendations.html" class="nav-item active"><span class="nav-icon">📋</span> Clinical Recommendations</a>
+        <a href="model-insights.html" class="nav-item"><span class="nav-icon">✨</span> Model Insights</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <a href="#" class="nav-item"><span class="nav-icon">💬</span> Support</a>
+        <a href="#" class="nav-item"><span class="nav-icon">🚪</span> Sign Out</a>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="topbar-brand-label">TB-CAD AI</span>
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search patient ID, name, or scan...">
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn">🔔<span class="notification-dot"></span></button>
+          <button class="topbar-icon-btn">⚙️</button>
+          <div class="user-info">
+            <div class="user-info-text">
+              <div class="user-name">Dr. Specialist</div>
+              <div class="user-role">Clinical Lead</div>
+            </div>
+            <div class="user-avatar">DS</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Page Header -->
+        <div class="page-header page-header-row">
+          <div>
+            <h1>Personalized Clinical Recommendation</h1>
+            <p class="page-subtitle">TB-suspected trajectory based on CNN/Grad-CAM analysis.</p>
+          </div>
+          <button class="btn btn-white">⬇️ Download Report PDF</button>
+        </div>
+
+        <!-- Layout Grid -->
+        <div class="grid-sidebar-layout-wide mb-24">
+          <!-- Main Left Column -->
+          <div class="flex flex-col gap-24">
+            <!-- Immediate Actions Required -->
+            <div class="card animate-fade-in">
+              <div class="card-header" style="margin-bottom: 16px;">
+                <h2 class="card-title" style="color: var(--red-600);"><span class="card-icon" style="color: var(--red-600)">⚠️</span> Immediate Actions Required</h2>
+              </div>
+              <div class="grid-3">
+                <!-- Action 1 -->
+                <div class="action-card">
+                  <div class="action-icon red">🔬</div>
+                  <h4>Confirmatory Testing</h4>
+                  <p>Refer patient immediately for comprehensive lab workup.</p>
+                </div>
+                <!-- Action 2 -->
+                <div class="action-card">
+                  <div class="action-icon orange">🧪</div>
+                  <h4>GeneXpert Test</h4>
+                  <p>Schedule rapid molecular test to detect TB DNA.</p>
+                </div>
+                <!-- Action 3 -->
+                <div class="action-card">
+                  <div class="action-icon pink">🛡️</div>
+                  <h4>Infection Precautions</h4>
+                  <p>Initiate airborne infection isolation protocols.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Follow-up Plan -->
+            <div class="card animate-fade-in animate-fade-in-delay-1">
+              <div class="card-header" style="margin-bottom: 12px;">
+                <h2 class="card-title"><span class="card-icon">🔄</span> Follow-up Plan</h2>
+              </div>
+              <div class="checklist">
+                <div class="checklist-item">
+                  <div class="checklist-icon green">✓</div>
+                  <div class="checklist-content">
+                    <h4>Review Symptoms</h4>
+                    <p>Monitor for cough, fever, and night sweats over the next 48 hours.</p>
+                  </div>
+                </div>
+                <div class="checklist-item">
+                  <div class="checklist-icon green">✓</div>
+                  <div class="checklist-content">
+                    <h4>Repeat CXR</h4>
+                    <p>Schedule a follow-up Chest X-ray in 2 weeks for comparative analysis.</p>
+                  </div>
+                </div>
+                <div class="checklist-item">
+                  <div class="checklist-icon green">✓</div>
+                  <div class="checklist-content">
+                    <h4>Refer to Specialist</h4>
+                    <p>Consult pulmonologist if confirmatory test is positive or symptoms worsen.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Side by Side Bottom Cards -->
+            <div class="grid-2">
+              <!-- Clinical Procedures Context -->
+              <div class="card animate-fade-in animate-fade-in-delay-2">
+                <div class="card-header" style="margin-bottom: 12px;">
+                  <h2 class="card-title">Clinical Procedures Context</h2>
+                </div>
+                <div class="procedures-table">
+                  <div class="proc-row">
+                    <span class="proc-name">CXR Review</span>
+                    <span class="proc-status pending">Pending</span>
+                  </div>
+                  <div class="proc-row">
+                    <span class="proc-name">Sputum Test</span>
+                    <span class="proc-status required" style="font-weight: 700;">Required</span>
+                  </div>
+                  <div class="proc-row">
+                    <span class="proc-name">Consultation</span>
+                    <span class="proc-status scheduled">Scheduled</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Research Context -->
+              <div class="card research-card animate-fade-in animate-fade-in-delay-2" style="background: var(--gray-50); border: 1px solid var(--border-color);">
+                <div class="research-icon">🎓</div>
+                <h4>Research Context</h4>
+                <p>Efficacy of CNN/Grad-CAM analysis in low-resource settings indicates a 94% sensitivity rate for early TB detection.</p>
+                <a href="#" class="read-studies">Read Studies 📑</a>
+              </div>
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="disclaimer animate-fade-in-delay-3">
+              <span class="disclaimer-icon">ⓘ</span>
+              <p>
+                <strong>Clinical AI Disclaimer:</strong> This AI-generated analysis is intended as a decision-support tool and is not a replacement for professional diagnosis. All results must be confirmed by a licensed medical professional through standard clinical procedures and laboratory testing.
+              </p>
+            </div>
+          </div>
+
+          <!-- Featured Next Step Sidebar -->
+          <div class="animate-fade-in animate-fade-in-delay-1">
+            <div class="featured-card">
+              <div class="featured-label">
+                <span>📅</span> Featured Next Step
+              </div>
+              <h3>TB Confirmatory Testing</h3>
+              <p>High AI confidence score suggests immediate clinical validation.</p>
+              <button class="btn-featured">📋 Generate Referral Note</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

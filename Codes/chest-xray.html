@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TB-CAD Clinical Suite - Diagnostic Workbench</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .workbench-grid {
+      display: grid;
+      grid-template-columns: 280px 1fr 280px;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 1200px) {
+      .workbench-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">TB</div>
+        <div class="sidebar-brand-text">
+          <h1>TB-CAD Clinical Suite</h1>
+          <span>v1.0 AI Diagnostic System</span>
+        </div>
+      </div>
+      <div class="sidebar-cta">
+        <a href="chest-xray.html" class="btn-start-analysis">▶ Start Analysis</a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+        <a href="chest-xray.html" class="nav-item active"><span class="nav-icon">🔬</span> Chest X-ray Analysis</a>
+        <a href="visual-analytics.html" class="nav-item"><span class="nav-icon">📊</span> Visual Analytics</a>
+        <a href="ai-assistant.html" class="nav-item"><span class="nav-icon">🤖</span> AI Assistant</a>
+        <a href="clinical-recommendations.html" class="nav-item"><span class="nav-icon">📋</span> Clinical Recommendations</a>
+        <a href="model-insights.html" class="nav-item"><span class="nav-icon">✨</span> Model Insights</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <a href="#" class="nav-item"><span class="nav-icon">💬</span> Support</a>
+        <a href="#" class="nav-item"><span class="nav-icon">🚪</span> Sign Out</a>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="topbar-brand-label">TB-CAD AI</span>
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search patient ID, name, or scan...">
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-icon-btn">🔔<span class="notification-dot"></span></button>
+          <button class="topbar-icon-btn">⚙️</button>
+          <div class="user-info">
+            <div class="user-info-text">
+              <div class="user-name">Dr. Specialist</div>
+              <div class="user-role">Clinical Lead</div>
+            </div>
+            <div class="user-avatar">DS</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+          <h1>Diagnostic Workbench</h1>
+          <p class="page-subtitle">Upload a chest X-ray image to execute AI-based tuberculosis screening using CNN and Grad-CAM visualization.</p>
+        </div>
+
+        <!-- Workbench Grid -->
+        <div class="workbench-grid mb-24">
+          <!-- Left Column -->
+          <div class="flex flex-col gap-20">
+            <!-- Import Chest X-ray Image -->
+            <div class="card animate-fade-in">
+              <div class="card-header" style="margin-bottom: 12px;">
+                <h2 class="card-title"><span class="card-icon">☁️</span> Import CXR Image</h2>
+              </div>
+              <div class="dropzone" style="padding: 32px 16px;">
+                <div class="dropzone-icon">☁️</div>
+                <div class="dropzone-text" style="font-weight: 500; font-size: 12px; margin-bottom: 12px;">Drag & drop frontal CXR image or choose file from workstation</div>
+                <button class="btn btn-primary btn-sm w-full">Select File</button>
+                <div class="dropzone-hint">Supports DICOM, PNG, JPG up to 25MB</div>
+              </div>
+            </div>
+
+            <!-- Preprocessing Pipeline -->
+            <div class="card animate-fade-in animate-fade-in-delay-1">
+              <div class="card-header" style="margin-bottom: 12px;">
+                <h2 class="card-title"><span class="card-icon">⚙️</span> Preprocessing</h2>
+              </div>
+              <div class="pipeline-step">
+                <span class="step-check">✓</span>
+                <span class="step-name">Image Resizing</span>
+                <span class="step-value">100%</span>
+              </div>
+              <div class="pipeline-step">
+                <span class="step-check">✓</span>
+                <span class="step-name">Pixel Normalization</span>
+                <span class="step-value">100%</span>
+              </div>
+              <div class="pipeline-step">
+                <span class="step-check">✓</span>
+                <span class="step-name">CXR Quality Check</span>
+                <span class="step-value">100%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Center Column (Viewer) -->
+          <div class="card xray-viewer animate-fade-in animate-fade-in-delay-1" style="padding: 0; min-height: 480px; position: relative;">
+            <div class="viewer-toolbar">
+              <button title="Zoom In">🔍+</button>
+              <button title="Zoom Out">🔍-</button>
+              <button title="Toggle Overlays">◆</button>
+            </div>
+            <div class="patient-id-tag">ID: PT-84729-X</div>
+            
+            <!-- Simulated X-Ray Gradient Background with overlay -->
+            <div style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: radial-gradient(ellipse at center, #2d3748 0%, #1a202c 60%, #0d0f14 100%); display: flex; align-items: center; justify-content: center; z-index: 1;">
+              <!-- Lung sketch representation using css border curves -->
+              <div class="animate-pulse" style="width: 240px; height: 320px; border: 1.5px solid rgba(255, 255, 255, 0.15); border-radius: 60px 60px 40px 40px; display: flex; justify-content: space-between; padding: 24px 20px;">
+                <div style="width: 80px; height: 260px; border: 1.5px solid rgba(255, 255, 255, 0.25); border-radius: 40px 10px 40px 30px; background: rgba(255,255,255,0.02);"></div>
+                <div style="width: 80px; height: 260px; border: 1.5px solid rgba(255, 255, 255, 0.25); border-radius: 10px 40px 30px 40px; background: rgba(255,255,255,0.02);"></div>
+              </div>
+            </div>
+
+            <!-- Heatmap Grad-CAM overlay -->
+            <div class="animate-pulse" style="position: absolute; top: 25%; left: 52%; width: 110px; height: 130px; background: radial-gradient(circle, rgba(239, 68, 68, 0.6) 0%, rgba(245, 158, 11, 0.4) 40%, rgba(234, 179, 8, 0.2) 70%, transparent 100%); border-radius: 50%; z-index: 2;"></div>
+
+            <!-- AI Focus Zone Box -->
+            <div class="ai-focus-zone" style="top: 20%; left: 48%; width: 130px; height: 160px; z-index: 3;">
+              <span class="focus-label">AI Focus Zone</span>
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div class="flex flex-col gap-20">
+            <!-- Explainability -->
+            <div class="explain-panel card animate-fade-in animate-fade-in-delay-2" style="height: 100%; display: flex; flex-direction: column;">
+              <h3 class="card-title" style="font-size: 15px; margin-bottom: 12px;"><span class="card-icon">🧠</span> Explainability</h3>
+              <p style="font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 16px;">
+                Grad-CAM heatmaps generated to highlight salient lung regions contributing to the classification. Areas marked in red and yellow indicate high attention weight by the neural network.
+              </p>
+              <div class="clinical-interpretation" style="flex: 1; background: var(--gray-50); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 16px;">
+                <h4 style="font-size: 9px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.5px; margin-bottom: 8px;">CLINICAL INTERPRETATION</h4>
+                <p style="font-size: 12px; color: var(--text-primary); font-style: italic; line-height: 1.6;">
+                  "Identifying suspicious pulmonary patterns consistent with upper lobe infiltration and consolidation. High correlation with classical tuberculosis presentation."
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Classification Result Bar -->
+        <div class="classification-bar mb-24 animate-fade-in-delay-3">
+          <div class="classification-result">
+            <span class="status-dot red animate-pulse" style="width: 10px; height: 10px;"></span>
+            <div>
+              <div class="result-text">Classification: TB-Positive Probable</div>
+              <div class="confidence-label">Diagnosis Trajectory Prediction</div>
+            </div>
+          </div>
+          <div class="classification-result">
+            <div class="confidence-score">94%</div>
+            <div class="confidence-label" style="margin-left: 8px; font-weight: 600;">Confidence<br>Score</div>
+          </div>
+          <div class="classification-actions">
+            <button class="btn btn-white">Save Result</button>
+            <a href="visual-analytics.html" class="btn btn-primary">📊 Go to Analytics</a>
+          </div>
+        </div>
+      </main>
+
+      <!-- Status Bar Footer -->
+      <footer class="status-bar">
+        <div class="status-left">
+          <div class="status-item"><span class="status-dot green"></span> System Online</div>
+          <div class="status-item">| Model: EfficientNetB0-CXR</div>
+        </div>
+        <div class="status-right">
+          <div class="status-item">Device: Cloud GPU</div>
+          <div class="status-item">| Latency: 42ms</div>
+        </div>
+      </footer>
+    </div>
+  </div>
+</body>
+</html>
